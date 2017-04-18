@@ -1,0 +1,10 @@
+/.*
+!/.gitignore
+!/.eslintc.json
+!/.travis.yml
+/bower_components/
+/node_modules/
+/.pulp-cache/
+/output/
+/generated-docs/
+*.tix

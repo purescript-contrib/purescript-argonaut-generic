@@ -1,15 +1,18 @@
-module Data.Argonaut.Decode.Generic where
+module Data.Argonaut.Decode.Generic (
+  gDecodeJson,
+  gDecodeJson'
+) where
 
 import Prelude
 
-import Data.Argonaut.Core (Json, JArray, JObject, isNull, foldJsonNull, foldJsonBoolean, foldJsonNumber, foldJsonString, toArray, toNumber, toObject, toString, toBoolean)
+import Data.Argonaut.Core (Json, toArray, toBoolean, toNumber, toObject, toString)
 import Data.Array (zipWithA)
 import Data.Either (Either(..))
 import Data.Foldable (find)
 import Data.Generic (class Generic, GenericSpine(..), GenericSignature(..), fromSpine, toSignature)
 import Data.Int (fromNumber)
 import Data.Maybe (maybe, Maybe(..))
-import Data.String (charAt, toChar)
+import Data.String (toChar)
 import Data.StrMap as SM
 import Data.Traversable (traverse, for)
 import Type.Proxy (Proxy(..))

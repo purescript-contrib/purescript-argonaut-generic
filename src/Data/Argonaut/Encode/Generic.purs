@@ -1,4 +1,7 @@
-module Data.Argonaut.Encode.Generic where
+module Data.Argonaut.Encode.Generic (
+  gEncodeJson, 
+  gEncodeJson'
+) where
 
 import Prelude
 

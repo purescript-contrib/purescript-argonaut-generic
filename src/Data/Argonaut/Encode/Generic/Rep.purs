@@ -60,5 +60,6 @@ instance encodeRepFieldsField :: (IsSymbol field, EncodeJson a) => EncodeRepFiel
     SM.singleton (reflectSymbol (SProxy :: SProxy field))
                  (encodeJson a)
 
+-- | Encode any `Generic` data structure into `Json`.
 genericEncodeJson :: forall a r. Rep.Generic a r => EncodeRep r => a -> Json
 genericEncodeJson = encodeRep <<< Rep.from

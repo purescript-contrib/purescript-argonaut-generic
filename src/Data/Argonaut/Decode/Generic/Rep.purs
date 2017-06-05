@@ -81,6 +81,7 @@ instance decodeRepFieldsField :: (IsSymbol field, DecodeJson a) => DecodeRepFiel
     value <- mFail ("the field '" <> name <> "' is not present") (SM.lookup name js)
     Rep.Field <$> decodeJson value
 
+-- | Decode `Json` representation of a value which has a `Generic` type.
 genericDecodeJson :: forall a r. Rep.Generic a r => DecodeRep r => Json -> Either String a
 genericDecodeJson = map Rep.to <<< decodeRep
 

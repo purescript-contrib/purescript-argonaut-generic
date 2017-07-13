@@ -18,7 +18,11 @@
   "dependencies": {
     "purescript-generics": "^4.0.0",
     "purescript-argonaut-core": "^3.1.0",
-    "purescript-argonaut-codecs": "^3.0.0"
+    "purescript-argonaut-codecs": "^3.0.0",
+    "purescript-generics-rep": "^5.1.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "purescript-assert": "^3.0.0",
+    "purescript-console": "^3.0.0"
+  }
 }

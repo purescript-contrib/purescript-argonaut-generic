@@ -1,5 +1,5 @@
 module Data.Argonaut.Encode.Generic (
-  gEncodeJson, 
+  gEncodeJson,
   gEncodeJson'
 ) where
 

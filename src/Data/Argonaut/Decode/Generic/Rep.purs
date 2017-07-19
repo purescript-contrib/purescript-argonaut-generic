@@ -2,10 +2,14 @@ module Data.Argonaut.Decode.Generic.Rep (
   class DecodeRep,
   class DecodeRepArgs,
   class DecodeRepFields,
+  class DecodeLiteral,
   decodeRep,
   decodeRepArgs,
   decodeRepFields,
-  genericDecodeJson
+  genericDecodeJson,
+  decodeLiteralSum,
+  decodeLiteralSumWithTransform,
+  decodeLiteral
 ) where
 
 import Prelude
@@ -20,6 +24,7 @@ import Data.Generic.Rep as Rep
 import Data.Maybe (Maybe, maybe)
 import Data.StrMap as SM
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
+import Partial.Unsafe (unsafeCrashWith)
 
 class DecodeRep r where
   decodeRep :: Json -> Either String r
@@ -87,3 +92,34 @@ genericDecodeJson = map Rep.to <<< decodeRep
 
 mFail :: forall a. String -> Maybe a -> Either String a
 mFail msg = maybe (Left msg) Right
+
+-- | A function for decoding `Generic` sum types using string literal representations
+decodeLiteralSum :: forall a r. Rep.Generic a r => DecodeLiteral r => Json -> Either String a
+decodeLiteralSum = decodeLiteralSumWithTransform id
+
+-- | A function for decoding `Generic` sum types using string literal representations
+-- | Takes a function for transforming the tag name in encoding
+decodeLiteralSumWithTransform :: forall a r. Rep.Generic a r => DecodeLiteral r => (String -> String) -> Json -> Either String a
+decodeLiteralSumWithTransform tagNameTransform = map Rep.to <<< decodeLiteral tagNameTransform
+
+class DecodeLiteral r where
+  decodeLiteral :: (String -> String) -> Json -> Either String r
+
+instance decodeLiteralSumInst :: (DecodeLiteral a, DecodeLiteral b) => DecodeLiteral (Rep.Sum a b) where
+  decodeLiteral tagNameTransform j = Rep.Inl <$> decodeLiteral tagNameTransform j <|> Rep.Inr <$> decodeLiteral tagNameTransform j
+
+instance decodeLiteralConstructor :: (IsSymbol name) => DecodeLiteral (Rep.Constructor name (Rep.NoArguments)) where
+  decodeLiteral tagNameTransform j = do
+    let name = reflectSymbol (SProxy :: SProxy name)
+    let decodingErr msg = "When decoding a " <> name <> ": " <> msg
+    tag <- mFail (decodingErr "could not read string for constructor") (toString j)
+    when (tag /= tagNameTransform name) $
+      Left $ decodingErr "string literal " <> tag <> " had an incorrect value."
+    pure $ Rep.Constructor (Rep.NoArguments)
+
+type FailMessage = """`decodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."""
+
+instance decodeLiteralConstructorCannotTakeProduct
+  :: Fail FailMessage
+  => DecodeLiteral (Rep.Product a b) where
+    decodeLiteral _ _ = unsafeCrashWith "unreachable DecodeLiteral was reached."

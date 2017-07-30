@@ -9,8 +9,10 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 import Data.Argonaut.Core (stringify)
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
 import Data.Argonaut.Decode.Generic.Rep (class DecodeLiteral, decodeLiteralSumWithTransform, genericDecodeJson)
+import Data.Argonaut.Decode.Record (decodeRecord)
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Argonaut.Encode.Generic.Rep (class EncodeLiteral, encodeLiteralSumWithTransform, genericEncodeJson)
+import Data.Argonaut.Encode.Record (encodeRecord)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either(..), fromRight)
 import Data.Generic.Rep (class Generic)
@@ -47,6 +49,20 @@ instance encodeJsonLiteralStringExample :: EncodeJson LiteralStringExample where
 instance decodeJsonLiteralStringExample :: DecodeJson LiteralStringExample where
   decodeJson a = decodeLiteralSumWithTransform id a
 
+newtype RecordTest = RecordTest
+  { a :: Int
+  , b :: String
+  , c :: Boolean
+  }
+derive instance eqRecordTest :: Eq RecordTest
+derive instance genericRecordTest :: Generic RecordTest _
+instance showRecordTest :: Show RecordTest where
+  show a = genericShow a
+instance encodeRecordTest :: EncodeJson RecordTest where
+  encodeJson (RecordTest a) = encodeRecord a
+instance decoderecordTest :: DecodeJson RecordTest where
+  decodeJson j = RecordTest <$> decodeRecord j
+
 main :: forall eff. Eff (assert :: ASSERT, console :: CONSOLE | eff) Unit
 main = do
   example $ Either $ Left "foo"
@@ -57,6 +73,7 @@ main = do
   testLiteralSumWithTransform id Frikandel "\"Frikandel\""
   testLiteralSumWithTransform toUpper Frikandel "\"FRIKANDEL\""
   testLiteralSumWithTransform toLower Frikandel "\"frikandel\""
+  example $ RecordTest {a: 1, b: "b", c: true}
 
   where
   example :: forall a. Show a => Eq a => EncodeJson a => DecodeJson a => a -> Eff _ Unit

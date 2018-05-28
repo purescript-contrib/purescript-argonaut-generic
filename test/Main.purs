@@ -43,9 +43,9 @@ derive instance genericLiteralStringExample :: Generic LiteralStringExample _
 instance showLiteralStringExample :: Show LiteralStringExample where
   show a = genericShow a
 instance encodeJsonLiteralStringExample :: EncodeJson LiteralStringExample where
-  encodeJson a = encodeLiteralSumWithTransform (\x->x) a
+  encodeJson a = encodeLiteralSumWithTransform identity a
 instance decodeJsonLiteralStringExample :: DecodeJson LiteralStringExample where
-  decodeJson a = decodeLiteralSumWithTransform (\x->x) a
+  decodeJson a = decodeLiteralSumWithTransform identity a
 
 main :: Effect Unit
 main = do
@@ -54,7 +54,7 @@ main = do
   example $ Record {foo: 42, bar: "bar"}
   example $ Product 1 2 $ Either $ Left "foo"
   example $ Frikandel
-  testLiteralSumWithTransform (\x->x) Frikandel "\"Frikandel\""
+  testLiteralSumWithTransform identity Frikandel "\"Frikandel\""
   testLiteralSumWithTransform toUpper Frikandel "\"FRIKANDEL\""
   testLiteralSumWithTransform toLower Frikandel "\"frikandel\""
 

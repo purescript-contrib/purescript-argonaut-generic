@@ -1,0 +1,16 @@
+{
+  "name": "purescript-argonaut-generic",
+  "set": "v0.12",
+  "source": "https://github.com/CarstenKoenig/package-sets.git",
+  "depends": [
+    "prelude",
+    "argonaut-codecs",
+    "argonaut-core",
+    "assert",
+    "console",
+    "effect",
+    "generics-rep",
+    "proxy",
+    "record"
+  ]
+}

@@ -16,13 +16,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "purescript-generics": "^4.0.0",
-    "purescript-argonaut-core": "^3.1.0",
-    "purescript-argonaut-codecs": "^3.0.0",
-    "purescript-generics-rep": "^5.1.0"
+    "purescript-argonaut-core": "^4.0.0",
+    "purescript-argonaut-codecs": "^3.3.0",
+    "purescript-generics-rep": "^6.0.0",
+    "purescript-record": "^1.0.0"
   },
   "devDependencies": {
-    "purescript-assert": "^3.0.0",
-    "purescript-console": "^3.0.0"
+    "purescript-assert": "^4.0.0",
+    "purescript-console": "^4.0.0",
+    "purescript-effect": "^2.0.0"
   }
 }

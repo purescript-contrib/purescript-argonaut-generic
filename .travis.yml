@@ -12,10 +12,9 @@ install:
   - npm install -g psc-package pulp
 script:
   - psc-package install
-  - pulp --version
-  - pulp test
+  - pulp --psc-package test
 after_success:
 - >-
   test $TRAVIS_TAG &&
   echo $GITHUB_TOKEN | pulp login &&
-  echo y | pulp publish --no-push
+  echo y | pulp --psc-package publish --no-push

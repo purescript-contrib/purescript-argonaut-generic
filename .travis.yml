@@ -12,6 +12,7 @@ install:
   - npm install -g psc-package pulp
 script:
   - psc-package install
+  - pulp --version
   - pulp test
 after_success:
 - >-

@@ -21,7 +21,6 @@ import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Generic.Rep as Rep
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
 import Foreign.Object as FO
-import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row as Row
 import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
 import Type.Data.RowList (RLProxy(..))

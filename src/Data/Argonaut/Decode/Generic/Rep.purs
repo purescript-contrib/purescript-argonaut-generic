@@ -24,8 +24,10 @@ import Data.Generic.Rep as Rep
 import Data.Maybe (Maybe(..), maybe)
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
 import Foreign.Object as FO
+import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row as Row
 import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
+import Prim.TypeError (class Fail, Text)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Type.Data.RowList (RLProxy(..))
@@ -146,8 +148,10 @@ instance decodeLiteralConstructor :: (IsSymbol name) => DecodeLiteral (Rep.Const
     pure $ Rep.Constructor (Rep.NoArguments)
 
 
-{- instance decodeLiteralConstructorCannotTakeProduct
-  :: Fail "`decodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."
+type FailMessage = 
+  Text "`decodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."
+
+instance decodeLiteralConstructorCannotTakeProduct
+  :: Fail FailMessage
   => DecodeLiteral (Rep.Product a b) where
     decodeLiteral _ _ = unsafeCrashWith "unreachable DecodeLiteral was reached."
- -}

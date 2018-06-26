@@ -21,10 +21,12 @@ import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Generic.Rep as Rep
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
 import Foreign.Object as FO
+import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row as Row
 import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
-import Type.Data.RowList (RLProxy(..))
+import Prim.TypeError (class Fail, Text)
 import Record (get)
+import Type.Data.RowList (RLProxy(..))
 
 class EncodeRep r where
   encodeRep :: r -> Json
@@ -106,10 +108,10 @@ instance encodeLiteralSumInst :: (EncodeLiteral a, EncodeLiteral b) => EncodeLit
 instance encodeLiteralConstructor :: (IsSymbol name) => EncodeLiteral (Rep.Constructor name (Rep.NoArguments)) where
   encodeLiteral tagNameTransform _ = fromString <<< tagNameTransform $ reflectSymbol (SProxy :: SProxy name)
 
-{- type FailMessage = """`encodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."""
+type FailMessage = 
+  Text """`encodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."""
 
 instance encodeLiteralConstructorCannotBeProduct
   :: Fail FailMessage
   => EncodeLiteral (Rep.Product a b) where
   encodeLiteral _ _ = unsafeCrashWith "unreachable encodeLiteral was reached."
- -}

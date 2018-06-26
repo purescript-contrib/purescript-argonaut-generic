@@ -125,7 +125,7 @@ mFail msg = maybe (Left msg) Right
 
 -- | A function for decoding `Generic` sum types using string literal representations
 decodeLiteralSum :: forall a r. Rep.Generic a r => DecodeLiteral r => Json -> Either String a
-decodeLiteralSum = decodeLiteralSumWithTransform (\a -> a)
+decodeLiteralSum = decodeLiteralSumWithTransform identity
 
 -- | A function for decoding `Generic` sum types using string literal representations
 -- | Takes a function for transforming the tag name in encoding

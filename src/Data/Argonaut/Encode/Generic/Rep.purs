@@ -91,7 +91,7 @@ genericEncodeJson = encodeRep <<< Rep.from
 
 -- | A function for encoding `Generic` sum types using string literal representations
 encodeLiteralSum :: forall a r. Rep.Generic a r => EncodeLiteral r => a -> Json
-encodeLiteralSum = encodeLiteralSumWithTransform (\a -> a)
+encodeLiteralSum = encodeLiteralSumWithTransform identity
 
 -- | A function for encoding `Generic` sum types using string literal representations
 -- | Takes a function for transforming the tag name in encoding

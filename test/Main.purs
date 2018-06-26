@@ -4,8 +4,8 @@ module Test.Main
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Effect (Effect)
+import Effect.Console (log)
 import Data.Argonaut.Core (stringify)
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
 import Data.Argonaut.Decode.Generic.Rep (class DecodeLiteral, decodeLiteralSumWithTransform, genericDecodeJson)
@@ -17,7 +17,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.String (toLower, toUpper)
 import Partial.Unsafe (unsafePartial)
-import Test.Assert (ASSERT, assert)
+import Test.Assert (assert)
 
 data Example
   = Either (Either String Example)
@@ -43,23 +43,23 @@ derive instance genericLiteralStringExample :: Generic LiteralStringExample _
 instance showLiteralStringExample :: Show LiteralStringExample where
   show a = genericShow a
 instance encodeJsonLiteralStringExample :: EncodeJson LiteralStringExample where
-  encodeJson a = encodeLiteralSumWithTransform id a
+  encodeJson a = encodeLiteralSumWithTransform identity a
 instance decodeJsonLiteralStringExample :: DecodeJson LiteralStringExample where
-  decodeJson a = decodeLiteralSumWithTransform id a
+  decodeJson a = decodeLiteralSumWithTransform identity a
 
-main :: forall eff. Eff (assert :: ASSERT, console :: CONSOLE | eff) Unit
+main :: Effect Unit
 main = do
   example $ Either $ Left "foo"
   example $ Either $ Right $ Either $ Left "foo"
   example $ Record {foo: 42, bar: "bar"}
   example $ Product 1 2 $ Either $ Left "foo"
   example $ Frikandel
-  testLiteralSumWithTransform id Frikandel "\"Frikandel\""
+  testLiteralSumWithTransform identity Frikandel "\"Frikandel\""
   testLiteralSumWithTransform toUpper Frikandel "\"FRIKANDEL\""
   testLiteralSumWithTransform toLower Frikandel "\"frikandel\""
 
   where
-  example :: forall a. Show a => Eq a => EncodeJson a => DecodeJson a => a -> Eff _ Unit
+  example :: forall a. Show a => Eq a => EncodeJson a => DecodeJson a => a -> Effect Unit
   example original = do
     let json = encodeJson original
     let parsed = decodeJson json
@@ -77,7 +77,7 @@ main = do
     => (String -> String)
     -> a
     -> String
-    -> Eff _ Unit
+    -> Effect Unit
   testLiteralSumWithTransform tagNameTransform original string = do
     let json = encodeLiteralSumWithTransform tagNameTransform original
     let parsed = decodeLiteralSumWithTransform tagNameTransform json

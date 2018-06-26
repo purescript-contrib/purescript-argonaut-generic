@@ -3,12 +3,13 @@ dist: trusty
 sudo: required
 node_js: stable
 install:
+  - npm install -g bower
   - npm install
 script:
-  - psc-package install
+  - bower install --production
   - npm run -s build
 after_success:
 - >-
   test $TRAVIS_TAG &&
-  echo $GITHUB_TOKEN | pulp --psc-package login &&
-  echo y | pulp --psc-package publish --no-push
+  echo $GITHUB_TOKEN | pulp login &&
+  echo y | pulp publish --no-push

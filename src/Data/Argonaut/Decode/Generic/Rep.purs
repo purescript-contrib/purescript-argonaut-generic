@@ -101,18 +101,9 @@ else instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argu
 -- | and have `decodeRepRowList` as witness on the value level that will try to decode
 -- | JSON in to the resulting record value
 -- | 
--- | `from` and `to` indicates the the step the `Builder` will take from a `Record from`
--- | to a `Record to`  so for a given `RowList` `from` will be the empty record
--- | and `to` your will contain all the fields `RowList` is representing
--- |
--- | it works just like pattern-matching on a normal list on the type level
--- | but here we have the two instances instead:
--- | - `decodeRepRowListNil` tells us how that an empty `RowList` is translated into
--- |   empty record - no decoding has to be done
--- | - `decodeRepRowListCons` tells us how to handle the *cons* case
--- |   it recursively adds a new field from the `RowList` head to the record 
--- |   (making sure that the `RowList` cannot contain such a field twice)
--- |   and provides `decodeRepRowList` using the obvious recursive strategy arising from this  
+-- | `from` and `to` are two helper types - using these `decodeRepRowListCons` can make sure
+-- | that every *symbol* in `rl` can only ocure once (the fields in the records must be unique)
+-- | (see `Row.Lacks`)
 class DecodeRepRowList (rl :: RowList) (from :: #Type) (to :: #Type) | rl -> from to where
   decodeRepRowList :: forall g . g rl -> FO.Object Json -> Either String (Builder (Record from) (Record to))
 

@@ -89,6 +89,30 @@ else instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argu
     {init: _, rest: tail} <<< Rep.Argument <$> decodeJson head
 
 
+-- | a `DecodeRepRowList` represents a relation between a `RowList` and a record you
+-- | can build from it by deserializing it's fields from a JSON `Object`
+-- |
+-- | this one is strictly internal to help out `decodeRepRecordArgument` handling records 
+-- |
+-- | a `RowList` on the type level is very similar to a *cons-list* on the value level
+-- | so the two instances handle all possible `RowList`s
+-- |
+-- | the idea is to use `Builder` to convert a `RowList` into a record at the type-level
+-- | and have `decodeRepRowList` as witness on the value level that will try to decode
+-- | JSON in to the resulting record value
+-- | 
+-- | `from` and `to` indicates the the step the `Builder` will take from a `Record from`
+-- | to a `Record to`  so for a given `RowList` `from` will be the empty record
+-- | and `to` your will contain all the fields `RowList` is representing
+-- |
+-- | it works just like pattern-matching on a normal list on the type level
+-- | but here we have the two instances instead:
+-- | - `decodeRepRowListNil` tells us how that an empty `RowList` is translated into
+-- |   empty record - no decoding has to be done
+-- | - `decodeRepRowListCons` tells us how to handle the *cons* case
+-- |   it recursively adds a new field from the `RowList` head to the record 
+-- |   (making sure that the `RowList` cannot contain such a field twice)
+-- |   and provides `decodeRepRowList` using the obvious recursive strategy arising from this  
 class DecodeRepRowList (rl :: RowList) (from :: #Type) (to :: #Type) | rl -> from to where
   decodeRepRowList :: forall g . g rl -> FO.Object Json -> Either String (Builder (Record from) (Record to))
 

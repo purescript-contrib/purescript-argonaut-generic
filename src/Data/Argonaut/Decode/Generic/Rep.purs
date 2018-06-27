@@ -101,8 +101,9 @@ else instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argu
 -- | and have `decodeRepRowList` as witness on the value level that will try to decode
 -- | JSON in to the resulting record value
 -- | 
--- | `from` and `to` are two helper types - using these `decodeRepRowListCons` can make sure
--- | that every *symbol* in `rl` can only ocure once (the fields in the records must be unique)
+-- | `from` and `to` are two helper types - using these `decodeRepRowListCons` can 
+-- | recursively create `Builder`-steps and make sure that every *symbol* in `rl` 
+-- | can only occur once (the fields in the records must be unique)
 -- | (see `Row.Lacks`)
 class DecodeRepRowList (rl :: RowList) (from :: #Type) (to :: #Type) | rl -> from to where
   decodeRepRowList :: forall g . g rl -> FO.Object Json -> Either String (Builder (Record from) (Record to))

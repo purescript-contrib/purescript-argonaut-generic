@@ -69,11 +69,24 @@ instance encodeRepFieldsProduct :: (EncodeRepFields a, EncodeRepFields b) => Enc
     FO.union (encodeRepFields a) (encodeRepFields b)
 
 
+-- | a `EncodeRepRowList` represents a relation between a `RowList` and a record you
+-- | can serialize into a Json `Object`
+-- |
+-- | this one is strictly internal to help out `encodeRepRecordArgument` handling records 
+-- |
+-- | a `RowList` on the type level is very similar to a *cons-list* on the value level
+-- | so the two instances handle all possible `RowList`s
+-- |
+-- | the idea is use the `Cons` cases to to compose functions that adds the field
+-- | and values from the given record into a Json-`Object`
+-- | the field in question is indicated by the head of the `RowList`
+-- |
+-- | the `Nil` case just returns `identity` to bootstrap the composition-chain
 class EncodeRepRowList (rl :: RowList) (row :: #Type) | rl -> row where
   encodeRepRowList :: forall g . g rl -> Record row -> (FO.Object Json -> FO.Object Json)
 
 instance encodeRepRowListNil :: EncodeRepRowList Nil row where
-  encodeRepRowList _ _ = \obj -> obj
+  encodeRepRowList _ _ = identity
 
 instance encodeRepRowListCons :: (EncodeJson ty, IsSymbol name, EncodeRepRowList tail row, Row.Cons name ty ignore row) => EncodeRepRowList (Cons name ty tail) row where
   encodeRepRowList _ rec = \obj -> FO.insert (reflectSymbol namep) (encodeJson value) (cont obj)

@@ -2,10 +2,12 @@ module Data.Argonaut.Encode.Generic.Rep (
   class EncodeRep,
   class EncodeRepArgs,
   class EncodeRepFields,
+  class EncodeRepRowList,
   class EncodeLiteral,
   encodeRep,
   encodeRepArgs,
   encodeRepFields,
+  encodeRepRowList,
   genericEncodeJson,
   encodeLiteralSum,
   encodeLiteralSumWithTransform,
@@ -17,9 +19,14 @@ import Prelude
 import Data.Argonaut.Core (Json, fromArray, fromObject, fromString)
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Generic.Rep as Rep
-import Data.StrMap as SM
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
+import Foreign.Object as FO
 import Partial.Unsafe (unsafeCrashWith)
+import Prim.Row as Row
+import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
+import Prim.TypeError (class Fail, Text)
+import Record (get)
+import Type.Data.RowList (RLProxy(..))
 
 class EncodeRep r where
   encodeRep :: r -> Json
@@ -34,9 +41,9 @@ instance encodeRepSum :: (EncodeRep a, EncodeRep b) => EncodeRep (Rep.Sum a b) w
 instance encodeRepConstructor :: (IsSymbol name, EncodeRepArgs a) => EncodeRep (Rep.Constructor name a) where
   encodeRep (Rep.Constructor a) =
     fromObject
-      $ SM.insert "tag" (fromString (reflectSymbol (SProxy :: SProxy name)))
-      $ SM.insert "values" (fromArray (encodeRepArgs a))
-      $ SM.empty
+      $ FO.insert "tag" (fromString (reflectSymbol (SProxy :: SProxy name)))
+      $ FO.insert "values" (fromArray (encodeRepArgs a))
+      $ FO.empty
 
 class EncodeRepArgs r where
   encodeRepArgs :: r -> Array Json
@@ -47,23 +54,49 @@ instance encodeRepArgsNoArguments :: EncodeRepArgs Rep.NoArguments where
 instance encodeRepArgsProduct :: (EncodeRepArgs a, EncodeRepArgs b) => EncodeRepArgs (Rep.Product a b) where
   encodeRepArgs (Rep.Product a b) = encodeRepArgs a <> encodeRepArgs b
 
-instance encodeRepArgsArgument :: (EncodeJson a) => EncodeRepArgs (Rep.Argument a) where
+instance encodeRepRecordArgument :: (RowToList row rl, EncodeRepRowList rl row) => EncodeRepArgs (Rep.Argument (Record row)) where
+  encodeRepArgs (Rep.Argument rec) = [ fromObject (encodeRepRowList rlp rec FO.empty) ]
+    where rlp = RLProxy :: RLProxy rl
+
+else instance encodeRepArgsArgument :: (EncodeJson a) => EncodeRepArgs (Rep.Argument a) where
   encodeRepArgs (Rep.Argument a) = [encodeJson a]
 
-instance encodeRepArgsRec :: (EncodeRepFields fields) => EncodeRepArgs (Rep.Rec fields) where
-  encodeRepArgs (Rep.Rec fields) = [fromObject $ encodeRepFields fields]
-
 class EncodeRepFields r where
-  encodeRepFields :: r -> SM.StrMap Json
+  encodeRepFields :: r -> FO.Object Json
 
 instance encodeRepFieldsProduct :: (EncodeRepFields a, EncodeRepFields b) => EncodeRepFields (Rep.Product a b) where
   encodeRepFields (Rep.Product a b) =
-    SM.union (encodeRepFields a) (encodeRepFields b)
+    FO.union (encodeRepFields a) (encodeRepFields b)
 
-instance encodeRepFieldsField :: (IsSymbol field, EncodeJson a) => EncodeRepFields (Rep.Field field a) where
-  encodeRepFields (Rep.Field a) =
-    SM.singleton (reflectSymbol (SProxy :: SProxy field))
-                 (encodeJson a)
+
+-- | a `EncodeRepRowList` represents a relation between a `RowList` and a record you
+-- | can serialize into a Json `Object`
+-- |
+-- | this one is strictly internal to help out `encodeRepRecordArgument` handling records 
+-- |
+-- | a `RowList` on the type level is very similar to a *cons-list* on the value level
+-- | so the two instances handle all possible `RowList`s
+-- |
+-- | the idea is use the `Cons` cases to to compose functions that adds the field
+-- | and values from the given record into a Json-`Object`
+-- | the field in question is indicated by the head of the `RowList`
+-- |
+-- | the `Nil` case just returns `identity` to bootstrap the composition-chain
+class EncodeRepRowList (rl :: RowList) (row :: #Type) | rl -> row where
+  encodeRepRowList :: forall g . g rl -> Record row -> (FO.Object Json -> FO.Object Json)
+
+instance encodeRepRowListNil :: EncodeRepRowList Nil row where
+  encodeRepRowList _ _ = identity
+
+instance encodeRepRowListCons :: (EncodeJson ty, IsSymbol name, EncodeRepRowList tail row, Row.Cons name ty ignore row) => EncodeRepRowList (Cons name ty tail) row where
+  encodeRepRowList _ rec = \obj -> FO.insert (reflectSymbol namep) (encodeJson value) (cont obj)
+    where
+      namep = SProxy :: SProxy name
+      value = get namep rec
+      tailp = RLProxy :: RLProxy tail
+      cont  = encodeRepRowList tailp rec
+
+
 
 -- | Encode any `Generic` data structure into `Json`.
 genericEncodeJson :: forall a r. Rep.Generic a r => EncodeRep r => a -> Json
@@ -71,7 +104,7 @@ genericEncodeJson = encodeRep <<< Rep.from
 
 -- | A function for encoding `Generic` sum types using string literal representations
 encodeLiteralSum :: forall a r. Rep.Generic a r => EncodeLiteral r => a -> Json
-encodeLiteralSum = encodeLiteralSumWithTransform id
+encodeLiteralSum = encodeLiteralSumWithTransform identity
 
 -- | A function for encoding `Generic` sum types using string literal representations
 -- | Takes a function for transforming the tag name in encoding
@@ -88,7 +121,8 @@ instance encodeLiteralSumInst :: (EncodeLiteral a, EncodeLiteral b) => EncodeLit
 instance encodeLiteralConstructor :: (IsSymbol name) => EncodeLiteral (Rep.Constructor name (Rep.NoArguments)) where
   encodeLiteral tagNameTransform _ = fromString <<< tagNameTransform $ reflectSymbol (SProxy :: SProxy name)
 
-type FailMessage = """`encodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."""
+type FailMessage = 
+  Text """`encodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."""
 
 instance encodeLiteralConstructorCannotBeProduct
   :: Fail FailMessage

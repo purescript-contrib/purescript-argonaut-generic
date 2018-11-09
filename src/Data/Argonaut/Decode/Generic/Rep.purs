@@ -1,11 +1,9 @@
 module Data.Argonaut.Decode.Generic.Rep (
   class DecodeRep,
   class DecodeRepArgs,
-  class DecodeRepRowList,
   class DecodeLiteral,
   decodeRep,
   decodeRepArgs,
-  decodeRepRowList,
   genericDecodeJson,
   decodeLiteralSum,
   decodeLiteralSumWithTransform,
@@ -21,16 +19,11 @@ import Data.Array (uncons)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Generic.Rep as Rep
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe, maybe)
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
 import Foreign.Object as FO
 import Partial.Unsafe (unsafeCrashWith)
-import Prim.Row as Row
-import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
 import Prim.TypeError (class Fail, Text)
-import Record.Builder (Builder)
-import Record.Builder as Builder
-import Type.Data.RowList (RLProxy(..))
 
 class DecodeRep r where
   decodeRep :: Json -> Either String r
@@ -69,68 +62,10 @@ instance decodeRepArgsProduct :: (DecodeRepArgs a, DecodeRepArgs b) => DecodeRep
     {init: b, rest: js''} <- decodeRepArgs js'
     pure {init: Rep.Product a b, rest: js''}
 
-instance decodeRepRecordArgument ::
-  ( RowToList row rl
-  , DecodeRepRowList rl () row
-  ) => DecodeRepArgs (Rep.Argument (Record row)) where
-  decodeRepArgs js = do
-    {head, tail} <- mFail "to few values were present" (uncons js)
-    obj <- mFail "no json object" (toObject head)
-    steps <- decodeRepRowList rlp obj
-    let arg = Rep.Argument $ Builder.build steps {}
-    pure {init: arg, rest: tail}
-    where
-      rlp :: RLProxy rl
-      rlp = RLProxy
-
-else instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argument a) where
+instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argument a) where
   decodeRepArgs js = do
     {head, tail} <- mFail "too few values were present" (uncons js)
     {init: _, rest: tail} <<< Rep.Argument <$> decodeJson head
-
-
--- | a `DecodeRepRowList` represents a relation between a `RowList` and a record you
--- | can build from it by deserializing it's fields from a JSON `Object`
--- |
--- | this one is strictly internal to help out `decodeRepRecordArgument` handling records 
--- |
--- | a `RowList` on the type level is very similar to a *cons-list* on the value level
--- | so the two instances handle all possible `RowList`s
--- |
--- | the idea is to use `Builder` to convert a `RowList` into a record at the type-level
--- | and have `decodeRepRowList` as witness on the value level that will try to decode
--- | JSON in to the resulting record value
--- | 
--- | `from` and `to` are two helper types - using these `decodeRepRowListCons` can 
--- | recursively create `Builder`-steps and make sure that every *symbol* in `rl` 
--- | can only occur once (the fields in the records must be unique)
--- | (see `Row.Lacks`)
-class DecodeRepRowList (rl :: RowList) (from :: #Type) (to :: #Type) | rl -> from to where
-  decodeRepRowList :: forall g . g rl -> FO.Object Json -> Either String (Builder (Record from) (Record to))
-
-instance decodeRepRowListNil :: DecodeRepRowList Nil () () where
-  decodeRepRowList _ _ = pure identity
-
-instance decodeRepRowListCons :: 
-  ( DecodeJson ty
-  , IsSymbol name
-  , DecodeRepRowList tail from from'
-  , Row.Lacks name from'
-  , Row.Cons name ty from' to
-  ) => DecodeRepRowList (Cons name ty tail) from to where
-  decodeRepRowList _ obj = do
-    value :: ty <- (error $ FO.lookup name obj) >>= decodeJson
-    rest  <- decodeRepRowList tailp obj
-    let
-      first :: Builder (Record from') (Record to)
-      first = Builder.insert namep value
-    pure $ first <<< rest
-    where
-      namep = SProxy :: SProxy name
-      tailp = RLProxy :: RLProxy tail
-      name  = reflectSymbol namep
-      error Nothing  = Left ("error while decoding field " <> name)
-      error (Just a) = Right a
 
 -- | Decode `Json` representation of a value which has a `Generic` type.
 genericDecodeJson :: forall a r. Rep.Generic a r => DecodeRep r => Json -> Either String a
@@ -164,7 +99,7 @@ instance decodeLiteralConstructor :: (IsSymbol name) => DecodeLiteral (Rep.Const
     pure $ Rep.Constructor (Rep.NoArguments)
 
 
-type FailMessage = 
+type FailMessage =
   Text "`decodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."
 
 instance decodeLiteralConstructorCannotTakeProduct

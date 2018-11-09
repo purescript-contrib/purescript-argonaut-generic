@@ -8,9 +8,10 @@ import Effect (Effect)
 import Effect.Console (log)
 import Data.Argonaut.Core (stringify)
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
-import Data.Argonaut.Decode.Generic.Rep (class DecodeLiteral, decodeLiteralSumWithTransform, genericDecodeJson)
+import Data.Argonaut.Decode.Generic.Rep (class DecodeLiteral, decodeLiteralSumWithTransform, genericDecodeJson, genericDecodeJsonWith)
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
-import Data.Argonaut.Encode.Generic.Rep (class EncodeLiteral, encodeLiteralSumWithTransform, genericEncodeJson)
+import Data.Argonaut.Encode.Generic.Rep (class EncodeLiteral, encodeLiteralSumWithTransform, genericEncodeJson, genericEncodeJsonWith)
+import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either(..), fromRight)
 import Data.Generic.Rep (class Generic)
@@ -47,6 +48,22 @@ instance encodeJsonLiteralStringExample :: EncodeJson LiteralStringExample where
 instance decodeJsonLiteralStringExample :: DecodeJson LiteralStringExample where
   decodeJson a = decodeLiteralSumWithTransform identity a
 
+diffEncodingOptions :: Encoding
+diffEncodingOptions = defaultEncoding
+  { tagKey = "type"
+  , valuesKey = "value"
+  }
+
+data DiffEncoding = A | B Int
+derive instance eqDiffEncoding :: Eq DiffEncoding
+derive instance genericDiffEncoding :: Generic DiffEncoding _
+instance showDiffENcoding :: Show DiffEncoding where
+  show a = genericShow a
+instance encodeJsonDiffEncoding :: EncodeJson DiffEncoding where
+  encodeJson a = genericEncodeJsonWith diffEncodingOptions a
+instance decodeJsonDiffEncoding :: DecodeJson DiffEncoding where
+  decodeJson a = genericDecodeJsonWith diffEncodingOptions a
+
 main :: Effect Unit
 main = do
   example $ Either $ Left "foo"
@@ -54,6 +71,8 @@ main = do
   example $ Record {foo: 42, bar: "bar"}
   example $ Product 1 2 $ Either $ Left "foo"
   example $ Frikandel
+  example $ A
+  example $ B 42
   testLiteralSumWithTransform identity Frikandel "\"Frikandel\""
   testLiteralSumWithTransform toUpper Frikandel "\"FRIKANDEL\""
   testLiteralSumWithTransform toLower Frikandel "\"frikandel\""

@@ -17,7 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "purescript-argonaut-core": "^4.0.1",
-    "purescript-argonaut-codecs": "^5.0.0",
+    "purescript-argonaut-codecs": "^4.0.1",
     "purescript-generics-rep": "^6.0.0",
     "purescript-record": "^1.0.0"
   },

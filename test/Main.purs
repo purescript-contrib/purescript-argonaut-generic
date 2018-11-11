@@ -22,6 +22,7 @@ import Test.Assert (assert)
 data Example
   = Either (Either String Example)
   | Record {foo :: Int, bar :: String}
+  | Nested {foo :: { nested :: Int }, bar :: String }
   | Product Int Int Example
 
 derive instance eqExample :: Eq Example
@@ -52,6 +53,7 @@ main = do
   example $ Either $ Left "foo"
   example $ Either $ Right $ Either $ Left "foo"
   example $ Record {foo: 42, bar: "bar"}
+  example $ Nested {foo: {nested: 42}, bar: "bar"}
   example $ Product 1 2 $ Either $ Left "foo"
   example $ Frikandel
   testLiteralSumWithTransform identity Frikandel "\"Frikandel\""

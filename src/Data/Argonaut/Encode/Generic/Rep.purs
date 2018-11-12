@@ -4,15 +4,18 @@ module Data.Argonaut.Encode.Generic.Rep (
   class EncodeRepFields,
   class EncodeLiteral,
   encodeRep,
+  encodeRepWith,
   encodeRepArgs,
   encodeRepFields,
   genericEncodeJson,
+  genericEncodeJsonWith,
   encodeLiteralSum,
   encodeLiteralSumWithTransform,
   encodeLiteral
 ) where
 
 import Prelude
+import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 
 import Data.Argonaut.Core (Json, fromArray, fromObject, fromString)
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
@@ -23,20 +26,23 @@ import Partial.Unsafe (unsafeCrashWith)
 import Prim.TypeError (class Fail, Text)
 
 class EncodeRep r where
-  encodeRep :: r -> Json
+  encodeRepWith :: Encoding -> r -> Json
+
+encodeRep :: forall r. EncodeRep r => r -> Json
+encodeRep = encodeRepWith defaultEncoding
 
 instance encodeRepNoConstructors :: EncodeRep Rep.NoConstructors where
-  encodeRep r = encodeRep r
+  encodeRepWith e = encodeRepWith e
 
 instance encodeRepSum :: (EncodeRep a, EncodeRep b) => EncodeRep (Rep.Sum a b) where
-  encodeRep (Rep.Inl a) = encodeRep a
-  encodeRep (Rep.Inr b) = encodeRep b
+  encodeRepWith e (Rep.Inl a) = encodeRepWith e a
+  encodeRepWith e (Rep.Inr b) = encodeRepWith e b
 
 instance encodeRepConstructor :: (IsSymbol name, EncodeRepArgs a) => EncodeRep (Rep.Constructor name a) where
-  encodeRep (Rep.Constructor a) =
+  encodeRepWith e (Rep.Constructor a) =
     fromObject
-      $ FO.insert "tag" (fromString (reflectSymbol (SProxy :: SProxy name)))
-      $ FO.insert "values" (fromArray (encodeRepArgs a))
+      $ FO.insert e.tagKey (fromString (reflectSymbol (SProxy :: SProxy name)))
+      $ FO.insert e.valuesKey (fromArray (encodeRepArgs a))
       $ FO.empty
 
 class EncodeRepArgs r where
@@ -61,7 +67,11 @@ instance encodeRepFieldsProduct :: (EncodeRepFields a, EncodeRepFields b) => Enc
 
 -- | Encode any `Generic` data structure into `Json`.
 genericEncodeJson :: forall a r. Rep.Generic a r => EncodeRep r => a -> Json
-genericEncodeJson = encodeRep <<< Rep.from
+genericEncodeJson = genericEncodeJsonWith defaultEncoding
+
+-- | Encode any `Generic` data structure into `Json`.
+genericEncodeJsonWith :: forall a r. Rep.Generic a r => EncodeRep r => Encoding -> a -> Json
+genericEncodeJsonWith e = encodeRepWith e <<< Rep.from
 
 -- | A function for encoding `Generic` sum types using string literal representations
 encodeLiteralSum :: forall a r. Rep.Generic a r => EncodeLiteral r => a -> Json

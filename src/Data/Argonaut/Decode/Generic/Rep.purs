@@ -13,16 +13,15 @@ module Data.Argonaut.Decode.Generic.Rep (
 ) where
 
 import Prelude
-import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 
 import Control.Alt ((<|>))
 import Data.Argonaut.Core (Json, toArray, toObject, toString)
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
+import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 import Data.Array (uncons)
 import Data.Bifunctor (lmap)
-import Data.Either (Either(..))
+import Data.Either (Either(..), note)
 import Data.Generic.Rep as Rep
-import Data.Maybe (Maybe, maybe)
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
 import Foreign.Object as FO
 import Partial.Unsafe (unsafeCrashWith)
@@ -44,13 +43,13 @@ instance decodeRepConstructor :: (IsSymbol name, DecodeRepArgs a) => DecodeRep (
   decodeRepWith e j = do
     let name = reflectSymbol (SProxy :: SProxy name)
     let decodingErr msg = "When decoding a " <> name <> ": " <> msg
-    jObj <- mFail (decodingErr "expected an object") (toObject j)
-    jTag <- mFail (decodingErr $ "'" <> e.tagKey <> "' property is missing") (FO.lookup e.tagKey jObj)
-    tag <- mFail (decodingErr $ "'" <> e.tagKey <> "' property is not a string") (toString jTag)
+    jObj <- note (decodingErr "expected an object") (toObject j)
+    jTag <- note (decodingErr $ "'" <> e.tagKey <> "' property is missing") (FO.lookup e.tagKey jObj)
+    tag <- note (decodingErr $ "'" <> e.tagKey <> "' property is not a string") (toString jTag)
     when (tag /= name) $
       Left $ decodingErr $ "'" <> e.tagKey <> "' property has an incorrect value"
-    jValues <- mFail (decodingErr $ "'" <> e.valuesKey <> "' property is missing") (FO.lookup e.valuesKey jObj)
-    values <- mFail (decodingErr $ "'" <> e.valuesKey <> "' property is not an array") (toArray jValues)
+    jValues <- note (decodingErr $ "'" <> e.valuesKey <> "' property is missing") (FO.lookup e.valuesKey jObj)
+    values <- note (decodingErr $ "'" <> e.valuesKey <> "' property is not an array") (toArray jValues)
     {init, rest} <- lmap decodingErr $ decodeRepArgs values
     when (rest /= []) $
       Left $ decodingErr $ "'" <> e.valuesKey <> "' property had too many values"
@@ -70,7 +69,7 @@ instance decodeRepArgsProduct :: (DecodeRepArgs a, DecodeRepArgs b) => DecodeRep
 
 instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argument a) where
   decodeRepArgs js = do
-    {head, tail} <- mFail "too few values were present" (uncons js)
+    {head, tail} <- note "too few values were present" (uncons js)
     {init: _, rest: tail} <<< Rep.Argument <$> decodeJson head
 
 -- | Decode `Json` representation of a value which has a `Generic` type.
@@ -80,9 +79,6 @@ genericDecodeJson = genericDecodeJsonWith defaultEncoding
 -- | Decode `Json` representation of a value which has a `Generic` type.
 genericDecodeJsonWith :: forall a r. Rep.Generic a r => DecodeRep r => Encoding -> Json -> Either String a
 genericDecodeJsonWith e = map Rep.to <<< decodeRepWith e
-
-mFail :: forall a. String -> Maybe a -> Either String a
-mFail msg = maybe (Left msg) Right
 
 -- | A function for decoding `Generic` sum types using string literal representations
 decodeLiteralSum :: forall a r. Rep.Generic a r => DecodeLiteral r => Json -> Either String a
@@ -103,7 +99,7 @@ instance decodeLiteralConstructor :: (IsSymbol name) => DecodeLiteral (Rep.Const
   decodeLiteral tagNameTransform j = do
     let name = reflectSymbol (SProxy :: SProxy name)
     let decodingErr msg = "When decoding a " <> name <> ": " <> msg
-    tag <- mFail (decodingErr "could not read string for constructor") (toString j)
+    tag <- note (decodingErr "could not read string for constructor") (toString j)
     when (tag /= tagNameTransform name) $
       Left $ decodingErr "string literal " <> tag <> " had an incorrect value."
     pure $ Rep.Constructor (Rep.NoArguments)

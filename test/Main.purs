@@ -65,6 +65,21 @@ instance encodeJsonDiffEncoding :: EncodeJson DiffEncoding where
 instance decodeJsonDiffEncoding :: DecodeJson DiffEncoding where
   decodeJson a = genericDecodeJsonWith diffEncodingOptions a
 
+unwrapSingleArgsOptions :: Encoding
+unwrapSingleArgsOptions = defaultEncoding
+  { unwrapSingleArguments = true
+  }
+
+data UnwrapSingleArgs = U0 Int | U1 Int Int
+derive instance eqUnwrapSingleArgs :: Eq UnwrapSingleArgs
+derive instance genericUnwrapSingleArgs :: Generic UnwrapSingleArgs _
+instance showUnwrapSingleArgs :: Show UnwrapSingleArgs where
+  show a = genericShow a
+instance encodeJsonUnwrapSingleArgs :: EncodeJson UnwrapSingleArgs where
+  encodeJson a = genericEncodeJsonWith unwrapSingleArgsOptions a
+instance decodeJsonUnwrapSingleArgs :: DecodeJson UnwrapSingleArgs where
+  decodeJson a = genericDecodeJsonWith unwrapSingleArgsOptions a
+
 main :: Effect Unit
 main = do
   example $ Either $ Left "foo"
@@ -75,6 +90,13 @@ main = do
   example $ Frikandel
   example $ A
   example $ B 42
+
+  example $ U0 42
+  assert $ stringify (encodeJson (U0 42)) == """{"values":42,"tag":"U0"}"""
+
+  example $ U1 1 2
+  assert $ stringify (encodeJson (U1 1 2)) == """{"values":[1,2],"tag":"U1"}"""
+
   testLiteralSumWithTransform identity Frikandel "\"Frikandel\""
   testLiteralSumWithTransform toUpper Frikandel "\"FRIKANDEL\""
   testLiteralSumWithTransform toLower Frikandel "\"frikandel\""
@@ -89,6 +111,7 @@ main = do
     log $ "From JSON: " <> show parsed
     assert $ parsed == Right original
     log $ "--------------------------------------------------------------------------------"
+
   testLiteralSumWithTransform :: forall a rep
     . Show a
     => Eq a

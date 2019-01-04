@@ -42,8 +42,16 @@ instance encodeRepConstructor :: (IsSymbol name, EncodeRepArgs a) => EncodeRep (
   encodeRepWith e (Rep.Constructor a) =
     fromObject
       $ FO.insert e.tagKey (fromString (reflectSymbol (SProxy :: SProxy name)))
-      $ FO.insert e.valuesKey (fromArray (encodeRepArgs a))
+      $ FO.insert e.valuesKey values
       $ FO.empty
+    where
+      values =
+        let vs = encodeRepArgs a in
+        if e.unwrapSingleArguments
+          then case vs of
+            [v] -> v
+            _ -> fromArray vs
+          else fromArray vs
 
 class EncodeRepArgs r where
   encodeRepArgs :: r -> Array Json
@@ -89,7 +97,7 @@ instance encodeLiteralSumInst :: (EncodeLiteral a, EncodeLiteral b) => EncodeLit
   encodeLiteral tagNameTransform (Rep.Inl a) = encodeLiteral tagNameTransform a
   encodeLiteral tagNameTransform (Rep.Inr b) = encodeLiteral tagNameTransform b
 
-instance encodeLiteralConstructor :: (IsSymbol name) => EncodeLiteral (Rep.Constructor name (Rep.NoArguments)) where
+instance encodeLiteralConstructor :: (IsSymbol name) => EncodeLiteral (Rep.Constructor name Rep.NoArguments) where
   encodeLiteral tagNameTransform _ = fromString <<< tagNameTransform $ reflectSymbol (SProxy :: SProxy name)
 
 type FailMessage = 

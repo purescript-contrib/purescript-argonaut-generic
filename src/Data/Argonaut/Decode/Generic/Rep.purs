@@ -39,21 +39,54 @@ instance decodeRepNoConstructors :: DecodeRep Rep.NoConstructors where
 instance decodeRepSum :: (DecodeRep a, DecodeRep b) => DecodeRep (Rep.Sum a b) where
   decodeRepWith e j = Rep.Inl <$> decodeRepWith e j <|> Rep.Inr <$> decodeRepWith e j
 
+withTagAndValues ::
+  Encoding ->
+  Json ->
+  String ->
+  Either String
+    { tag :: String
+    , values :: Json
+    , decodingErr :: String -> String
+    }
+withTagAndValues e j name = do
+  let decodingErr msg = "When decoding a " <> name <> ": " <> msg
+  jObj <- note (decodingErr "expected an object") (toObject j)
+  jTag <- note (decodingErr $ "'" <> e.tagKey <> "' property is missing") (FO.lookup e.tagKey jObj)
+  tag <- note (decodingErr $ "'" <> e.tagKey <> "' property is not a string") (toString jTag)
+  when (tag /= name) $
+    Left $ decodingErr $ "'" <> e.tagKey <> "' property has an incorrect value"
+  values <- note (decodingErr $ "'" <> e.valuesKey <> "' property is missing") (FO.lookup e.valuesKey jObj)
+  pure {tag, values, decodingErr}
+
+construct ::
+  forall e t s .
+  DecodeRepArgs t =>
+  Encoding ->
+  Array Json ->
+  (String -> e) ->
+  Either e (Rep.Constructor s t)
+construct e valuesArray decodingErr = do
+  {init, rest} <- lmap decodingErr $ decodeRepArgs valuesArray
+  when (rest /= []) $
+    Left $ decodingErr $ "'" <> e.valuesKey <> "' property had too many values"
+  pure $ Rep.Constructor init
+
+instance decodeRepConstructorArg :: (IsSymbol name, DecodeJson a) => DecodeRep (Rep.Constructor name (Rep.Argument a)) where
+  decodeRepWith e j = do
+    let name = reflectSymbol (SProxy :: SProxy name)
+    {tag, values, decodingErr} <- withTagAndValues e j name
+    if e.unwrapSingleArguments
+      then construct e [values] decodingErr
+      else do
+        valuesArray <- note (decodingErr $ "'" <> e.valuesKey <> "' property is not an array") (toArray values)
+        construct e valuesArray decodingErr
+else
 instance decodeRepConstructor :: (IsSymbol name, DecodeRepArgs a) => DecodeRep (Rep.Constructor name a) where
   decodeRepWith e j = do
     let name = reflectSymbol (SProxy :: SProxy name)
-    let decodingErr msg = "When decoding a " <> name <> ": " <> msg
-    jObj <- note (decodingErr "expected an object") (toObject j)
-    jTag <- note (decodingErr $ "'" <> e.tagKey <> "' property is missing") (FO.lookup e.tagKey jObj)
-    tag <- note (decodingErr $ "'" <> e.tagKey <> "' property is not a string") (toString jTag)
-    when (tag /= name) $
-      Left $ decodingErr $ "'" <> e.tagKey <> "' property has an incorrect value"
-    jValues <- note (decodingErr $ "'" <> e.valuesKey <> "' property is missing") (FO.lookup e.valuesKey jObj)
-    values <- note (decodingErr $ "'" <> e.valuesKey <> "' property is not an array") (toArray jValues)
-    {init, rest} <- lmap decodingErr $ decodeRepArgs values
-    when (rest /= []) $
-      Left $ decodingErr $ "'" <> e.valuesKey <> "' property had too many values"
-    pure $ Rep.Constructor init
+    {tag, values, decodingErr} <- withTagAndValues e j name
+    valuesArray <- note (decodingErr $ "'" <> e.valuesKey <> "' property is not an array") (toArray values)
+    construct e valuesArray decodingErr
 
 class DecodeRepArgs r where
   decodeRepArgs :: Array Json -> Either String {init :: r, rest :: Array Json}

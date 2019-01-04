@@ -39,6 +39,23 @@ instance decodeRepNoConstructors :: DecodeRep Rep.NoConstructors where
 instance decodeRepSum :: (DecodeRep a, DecodeRep b) => DecodeRep (Rep.Sum a b) where
   decodeRepWith e j = Rep.Inl <$> decodeRepWith e j <|> Rep.Inr <$> decodeRepWith e j
 
+withTag ::
+  Encoding ->
+  Json ->
+  String ->
+  Either String
+    { tag :: String
+    , decodingErr :: String -> String
+    }
+withTag e j name = do
+  let decodingErr msg = "When decoding a " <> name <> ": " <> msg
+  jObj <- note (decodingErr "expected an object") (toObject j)
+  jTag <- note (decodingErr $ "'" <> e.tagKey <> "' property is missing") (FO.lookup e.tagKey jObj)
+  tag <- note (decodingErr $ "'" <> e.tagKey <> "' property is not a string") (toString jTag)
+  when (tag /= name) $
+    Left $ decodingErr $ "'" <> e.tagKey <> "' property has an incorrect value"
+  pure {tag, decodingErr}
+
 withTagAndValues ::
   Encoding ->
   Json ->
@@ -49,12 +66,8 @@ withTagAndValues ::
     , decodingErr :: String -> String
     }
 withTagAndValues e j name = do
-  let decodingErr msg = "When decoding a " <> name <> ": " <> msg
+  {tag, decodingErr} <- withTag e j name
   jObj <- note (decodingErr "expected an object") (toObject j)
-  jTag <- note (decodingErr $ "'" <> e.tagKey <> "' property is missing") (FO.lookup e.tagKey jObj)
-  tag <- note (decodingErr $ "'" <> e.tagKey <> "' property is not a string") (toString jTag)
-  when (tag /= name) $
-    Left $ decodingErr $ "'" <> e.tagKey <> "' property has an incorrect value"
   values <- note (decodingErr $ "'" <> e.valuesKey <> "' property is missing") (FO.lookup e.valuesKey jObj)
   pure {tag, values, decodingErr}
 
@@ -71,6 +84,12 @@ construct e valuesArray decodingErr = do
     Left $ decodingErr $ "'" <> e.valuesKey <> "' property had too many values"
   pure $ Rep.Constructor init
 
+instance decodeRepConstructorNoArgs :: IsSymbol name => DecodeRep (Rep.Constructor name Rep.NoArguments) where
+  decodeRepWith e j = do
+    let name = reflectSymbol (SProxy :: SProxy name)
+    {tag, decodingErr} <- withTag e j name
+    construct e [] decodingErr
+else
 instance decodeRepConstructorArg :: (IsSymbol name, DecodeJson a) => DecodeRep (Rep.Constructor name (Rep.Argument a)) where
   decodeRepWith e j = do
     let name = reflectSymbol (SProxy :: SProxy name)

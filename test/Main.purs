@@ -80,6 +80,16 @@ instance encodeJsonUnwrapSingleArgs :: EncodeJson UnwrapSingleArgs where
 instance decodeJsonUnwrapSingleArgs :: DecodeJson UnwrapSingleArgs where
   decodeJson a = genericDecodeJsonWith unwrapSingleArgsOptions a
 
+data IgnoreNullaryArgs = NA0 | NA1 Int
+derive instance eqIgnoreNullaryArgs :: Eq IgnoreNullaryArgs
+derive instance genericIgnoreNullaryArgs :: Generic IgnoreNullaryArgs _
+instance showIgnoreNullaryArgs :: Show IgnoreNullaryArgs where
+  show a = genericShow a
+instance encodeJsonIgnoreNullaryArgs :: EncodeJson IgnoreNullaryArgs where
+  encodeJson a = genericEncodeJson a
+instance decodeJsonIgnoreNullaryArgs :: DecodeJson IgnoreNullaryArgs where
+  decodeJson a = genericDecodeJson a
+
 main :: Effect Unit
 main = do
   example $ Either $ Left "foo"
@@ -100,6 +110,10 @@ main = do
   testLiteralSumWithTransform identity Frikandel "\"Frikandel\""
   testLiteralSumWithTransform toUpper Frikandel "\"FRIKANDEL\""
   testLiteralSumWithTransform toLower Frikandel "\"frikandel\""
+
+  example $ NA1 42
+  example $ NA0
+  assert $ (jsonParser """{"tag":"NA0"}""" >>= decodeJson) == Right NA0
 
   where
   example :: forall a. Show a => Eq a => EncodeJson a => DecodeJson a => a -> Effect Unit

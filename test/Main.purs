@@ -65,6 +65,31 @@ instance encodeJsonDiffEncoding :: EncodeJson DiffEncoding where
 instance decodeJsonDiffEncoding :: DecodeJson DiffEncoding where
   decodeJson a = genericDecodeJsonWith diffEncodingOptions a
 
+unwrapSingleArgsOptions :: Encoding
+unwrapSingleArgsOptions = defaultEncoding
+  { unwrapSingleArguments = true
+  }
+
+data UnwrapSingleArgs = U0 Int | U1 Int Int
+derive instance eqUnwrapSingleArgs :: Eq UnwrapSingleArgs
+derive instance genericUnwrapSingleArgs :: Generic UnwrapSingleArgs _
+instance showUnwrapSingleArgs :: Show UnwrapSingleArgs where
+  show a = genericShow a
+instance encodeJsonUnwrapSingleArgs :: EncodeJson UnwrapSingleArgs where
+  encodeJson a = genericEncodeJsonWith unwrapSingleArgsOptions a
+instance decodeJsonUnwrapSingleArgs :: DecodeJson UnwrapSingleArgs where
+  decodeJson a = genericDecodeJsonWith unwrapSingleArgsOptions a
+
+data IgnoreNullaryArgs = NA0 | NA1 Int
+derive instance eqIgnoreNullaryArgs :: Eq IgnoreNullaryArgs
+derive instance genericIgnoreNullaryArgs :: Generic IgnoreNullaryArgs _
+instance showIgnoreNullaryArgs :: Show IgnoreNullaryArgs where
+  show a = genericShow a
+instance encodeJsonIgnoreNullaryArgs :: EncodeJson IgnoreNullaryArgs where
+  encodeJson a = genericEncodeJson a
+instance decodeJsonIgnoreNullaryArgs :: DecodeJson IgnoreNullaryArgs where
+  decodeJson a = genericDecodeJson a
+
 main :: Effect Unit
 main = do
   example $ Either $ Left "foo"
@@ -75,9 +100,20 @@ main = do
   example $ Frikandel
   example $ A
   example $ B 42
+
+  example $ U0 42
+  assert $ stringify (encodeJson (U0 42)) == """{"values":42,"tag":"U0"}"""
+
+  example $ U1 1 2
+  assert $ stringify (encodeJson (U1 1 2)) == """{"values":[1,2],"tag":"U1"}"""
+
   testLiteralSumWithTransform identity Frikandel "\"Frikandel\""
   testLiteralSumWithTransform toUpper Frikandel "\"FRIKANDEL\""
   testLiteralSumWithTransform toLower Frikandel "\"frikandel\""
+
+  example $ NA1 42
+  example $ NA0
+  assert $ (jsonParser """{"tag":"NA0"}""" >>= decodeJson) == Right NA0
 
   where
   example :: forall a. Show a => Eq a => EncodeJson a => DecodeJson a => a -> Effect Unit
@@ -89,6 +125,7 @@ main = do
     log $ "From JSON: " <> show parsed
     assert $ parsed == Right original
     log $ "--------------------------------------------------------------------------------"
+
   testLiteralSumWithTransform :: forall a rep
     . Show a
     => Eq a

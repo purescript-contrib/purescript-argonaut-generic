@@ -78,15 +78,16 @@ genericEncodeJson :: forall a r. Rep.Generic a r => EncodeRep r => a -> Json
 genericEncodeJson = genericEncodeJsonWith defaultEncoding
 
 -- | Encode any `Generic` data structure into `Json`.
+-- | Takes a record for encoding settings.
 genericEncodeJsonWith :: forall a r. Rep.Generic a r => EncodeRep r => Encoding -> a -> Json
 genericEncodeJsonWith e = encodeRepWith e <<< Rep.from
 
--- | A function for encoding `Generic` sum types using string literal representations
+-- | A function for encoding `Generic` sum types using string literal representations.
 encodeLiteralSum :: forall a r. Rep.Generic a r => EncodeLiteral r => a -> Json
 encodeLiteralSum = encodeLiteralSumWithTransform identity
 
--- | A function for encoding `Generic` sum types using string literal representations
--- | Takes a function for transforming the tag name in encoding
+-- | A function for encoding `Generic` sum types using string literal representations.
+-- | Takes a function for transforming the tag name in encoding.
 encodeLiteralSumWithTransform :: forall a r. Rep.Generic a r => EncodeLiteral r => (String -> String) -> a -> Json
 encodeLiteralSumWithTransform tagNameTransform = encodeLiteral tagNameTransform <<< Rep.from
 

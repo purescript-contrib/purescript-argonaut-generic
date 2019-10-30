@@ -129,15 +129,16 @@ genericDecodeJson :: forall a r. Rep.Generic a r => DecodeRep r => Json -> Eithe
 genericDecodeJson = genericDecodeJsonWith defaultEncoding
 
 -- | Decode `Json` representation of a value which has a `Generic` type.
+-- | Takes a record for encoding settings.
 genericDecodeJsonWith :: forall a r. Rep.Generic a r => DecodeRep r => Encoding -> Json -> Either String a
 genericDecodeJsonWith e = map Rep.to <<< decodeRepWith e
 
--- | A function for decoding `Generic` sum types using string literal representations
+-- | A function for decoding `Generic` sum types using string literal representations.
 decodeLiteralSum :: forall a r. Rep.Generic a r => DecodeLiteral r => Json -> Either String a
 decodeLiteralSum = decodeLiteralSumWithTransform identity
 
--- | A function for decoding `Generic` sum types using string literal representations
--- | Takes a function for transforming the tag name in encoding
+-- | A function for decoding `Generic` sum types using string literal representations.
+-- | Takes a function for transforming the tag name in encoding.
 decodeLiteralSumWithTransform :: forall a r. Rep.Generic a r => DecodeLiteral r => (String -> String) -> Json -> Either String a
 decodeLiteralSumWithTransform tagNameTransform = map Rep.to <<< decodeLiteral tagNameTransform
 

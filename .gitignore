@@ -1,11 +1,19 @@
 /.*
 !/.gitignore
 !/.github
-!/.eslintc.json
 !/.travis.yml
-/bower_components/
-/node_modules/
-/.pulp-cache/
-/output/
-/generated-docs/
-*.tix
+
+# Dependencies
+bower_components
+node_modules
+
+# Generated files
+output
+generated-docs
+
+# Lockfiles
+package-lock.json
+*.lock
+
+# Extra files
+!/.eslintc.json

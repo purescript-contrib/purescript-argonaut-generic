@@ -5,11 +5,15 @@
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-argonaut-generic/badge)](http://pursuit.purescript.org/packages/purescript-argonaut-generic/)
 [![Maintainer: thomashoneyman](https://img.shields.io/badge/maintainer-thomashoneyman-lightgrey.svg)](http://github.com/thomashoneyman)
 
-This package provides `gEncodeJson` and `gDecodeJson` functions for any data types that have a `Generic` instance, and `genericEncodeJson` and `genericDecodeJson` functions for any data types that have a `Rep.Generic` instance.
+This package provides `genericEncodeJson` and `genericDecodeJson` functions for any data types that have a `Generic.Rep` instance.
 
 ## Installation
 
 ```shell
+# with Spago
+spago install argonaut-generic
+
+# with Bower
 bower install purescript-argonaut-generic
 ```
 

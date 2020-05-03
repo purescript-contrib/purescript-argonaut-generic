@@ -4,19 +4,21 @@ module Test.Main
 
 import Prelude
 
-import Effect (Effect)
-import Effect.Console (log)
-import Data.Argonaut.Core (stringify)
+import Data.Argonaut.Core (Json, stringify)
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
 import Data.Argonaut.Decode.Generic.Rep (class DecodeLiteral, decodeLiteralSumWithTransform, genericDecodeJson, genericDecodeJsonWith)
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Argonaut.Encode.Generic.Rep (class EncodeLiteral, encodeLiteralSumWithTransform, genericEncodeJson, genericEncodeJsonWith)
-import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 import Data.Argonaut.Parser (jsonParser)
-import Data.Either (Either(..), fromRight)
+import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
+import Data.Either (Either(..), either, fromRight)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.String (toLower, toUpper)
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Effect.Exception (throw)
 import Partial.Unsafe (unsafePartial)
 import Test.Assert (assert)
 
@@ -90,6 +92,9 @@ instance encodeJsonIgnoreNullaryArgs :: EncodeJson IgnoreNullaryArgs where
 instance decodeJsonIgnoreNullaryArgs :: DecodeJson IgnoreNullaryArgs where
   decodeJson a = genericDecodeJson a
 
+jsonParser' :: String -> Effect Json
+jsonParser' = either throw pure <<< jsonParser
+
 main :: Effect Unit
 main = do
   example $ Either $ Left "foo"
@@ -113,7 +118,8 @@ main = do
 
   example $ NA1 42
   example $ NA0
-  assert $ (jsonParser """{"tag":"NA0"}""" >>= decodeJson) == Right NA0
+  json <- jsonParser' """{"tag":"NA0"}"""
+  assert $ (decodeJson json) == Right NA0
 
   where
   example :: forall a. Show a => Eq a => EncodeJson a => DecodeJson a => a -> Effect Unit

@@ -16,7 +16,7 @@ import Prelude
 
 import Control.Alt ((<|>))
 import Data.Argonaut.Core (Json, fromString, toArray, toObject, toString, fromArray)
-import Data.Argonaut.Decode (class DecodeJson, decodeJson, Decoder, JsonDecodeError(..))
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, JsonDecodeError(..))
 import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 import Data.Array (uncons)
 import Data.Bifunctor (lmap)
@@ -28,9 +28,9 @@ import Partial.Unsafe (unsafeCrashWith)
 import Prim.TypeError (class Fail, Text)
 
 class DecodeRep r where
-  decodeRepWith :: Encoding -> Decoder r
+  decodeRepWith :: Encoding -> Json -> Either JsonDecodeError r
 
-decodeRep :: forall r. DecodeRep r => Decoder r
+decodeRep :: forall r. DecodeRep r => Json -> Either JsonDecodeError r
 decodeRep = decodeRepWith defaultEncoding
 
 instance decodeRepNoConstructors :: DecodeRep Rep.NoConstructors where
@@ -125,25 +125,25 @@ instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argument 
     {init: _, rest: tail} <<< Rep.Argument <$> decodeJson head
 
 -- | Decode `Json` representation of a value which has a `Generic` type.
-genericDecodeJson :: forall a r. Rep.Generic a r => DecodeRep r => Decoder a
+genericDecodeJson :: forall a r. Rep.Generic a r => DecodeRep r => Json -> Either JsonDecodeError a
 genericDecodeJson = genericDecodeJsonWith defaultEncoding
 
 -- | Decode `Json` representation of a value which has a `Generic` type.
 -- | Takes a record for encoding settings.
-genericDecodeJsonWith :: forall a r. Rep.Generic a r => DecodeRep r => Encoding -> Decoder a
+genericDecodeJsonWith :: forall a r. Rep.Generic a r => DecodeRep r => Encoding -> Json -> Either JsonDecodeError a
 genericDecodeJsonWith e = map Rep.to <<< decodeRepWith e
 
 -- | A function for decoding `Generic` sum types using string literal representations.
-decodeLiteralSum :: forall a r. Rep.Generic a r => DecodeLiteral r => Decoder a
+decodeLiteralSum :: forall a r. Rep.Generic a r => DecodeLiteral r => Json -> Either JsonDecodeError a
 decodeLiteralSum = decodeLiteralSumWithTransform identity
 
 -- | A function for decoding `Generic` sum types using string literal representations.
 -- | Takes a function for transforming the tag name in encoding.
-decodeLiteralSumWithTransform :: forall a r. Rep.Generic a r => DecodeLiteral r => (String -> String) -> Decoder a
+decodeLiteralSumWithTransform :: forall a r. Rep.Generic a r => DecodeLiteral r => (String -> String) -> Json -> Either JsonDecodeError a
 decodeLiteralSumWithTransform tagNameTransform = map Rep.to <<< decodeLiteral tagNameTransform
 
 class DecodeLiteral r where
-  decodeLiteral :: (String -> String) -> Decoder r
+  decodeLiteral :: (String -> String) -> Json -> Either JsonDecodeError r
 
 instance decodeLiteralSumInst :: (DecodeLiteral a, DecodeLiteral b) => DecodeLiteral (Rep.Sum a b) where
   decodeLiteral tagNameTransform j = Rep.Inl <$> decodeLiteral tagNameTransform j <|> Rep.Inr <$> decodeLiteral tagNameTransform j

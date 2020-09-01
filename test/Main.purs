@@ -16,7 +16,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.String (toLower, toUpper)
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Exception (throw)
 import Partial.Unsafe (unsafePartial)
@@ -24,8 +23,8 @@ import Test.Assert (assert)
 
 data Example
   = Either (Either String Example)
-  | Record {foo :: Int, bar :: String}
-  | Nested {foo :: { nested :: Int }, bar :: String }
+  | Record { foo :: Int, bar :: String}
+  | Nested { foo :: { nested :: Int }, bar :: String }
   | Product Int Int Example
 
 derive instance eqExample :: Eq Example

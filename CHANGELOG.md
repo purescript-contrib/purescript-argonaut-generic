@@ -47,4 +47,3 @@ Library update for PureScript 0.12 compatibility (@CarstenKoenig)
 ## [v1.0.0](https://github.com/purescript-contrib/purescript-argonaut-generic/releases/tag/v1.0.0) - 2017-04-22
 
 - Initial release
-

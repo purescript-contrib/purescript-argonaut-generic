@@ -6,6 +6,8 @@ Notable changes to this project are documented in this file. The format is based
 
 Breaking changes (😱!!!):
 
+- Removed vestigial `EncodeRepFields` class and its remaining instance for  `Data.Generic.Rep.Product`.
+
 New features:
 
 Bugfixes:

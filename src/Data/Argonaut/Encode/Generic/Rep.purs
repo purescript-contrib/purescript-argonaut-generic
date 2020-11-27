@@ -1,12 +1,10 @@
 module Data.Argonaut.Encode.Generic.Rep (
   class EncodeRep,
   class EncodeRepArgs,
-  class EncodeRepFields,
   class EncodeLiteral,
   encodeRep,
   encodeRepWith,
   encodeRepArgs,
-  encodeRepFields,
   genericEncodeJson,
   genericEncodeJsonWith,
   encodeLiteralSum,
@@ -64,14 +62,6 @@ instance encodeRepArgsProduct :: (EncodeRepArgs a, EncodeRepArgs b) => EncodeRep
 
 instance encodeRepArgsArgument :: (EncodeJson a) => EncodeRepArgs (Rep.Argument a) where
   encodeRepArgs (Rep.Argument a) = [encodeJson a]
-
-class EncodeRepFields r where
-  encodeRepFields :: r -> FO.Object Json
-
-instance encodeRepFieldsProduct :: (EncodeRepFields a, EncodeRepFields b) => EncodeRepFields (Rep.Product a b) where
-  encodeRepFields (Rep.Product a b) =
-    FO.union (encodeRepFields a) (encodeRepFields b)
-
 
 -- | Encode any `Generic` data structure into `Json`.
 genericEncodeJson :: forall a r. Rep.Generic a r => EncodeRep r => a -> Json

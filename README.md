@@ -15,12 +15,6 @@ Install `argonaut-generic` with [Spago](https://github.com/purescript/spago):
 spago install argonaut-generic
 ```
 
-or as part of the [Argonaut](https://github.com/purescript-contrib/purescript-argonaut) collection of libraries:
-
-```sh
-spago install argonaut
-```
-
 ## Quick start
 
 We can use functions from the `Data.Argonaut.Decode.Generic.Rep` and `Data.Argonaut.Encode.Generic.Rep` modules to automatically write instances of `DecodeJson` and `EncodeJson` for our data types. The below example defines a recursive sum type, derives `Generic`, and then uses this library to write its decoding and encoding instances:

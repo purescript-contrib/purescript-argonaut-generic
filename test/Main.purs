@@ -11,14 +11,14 @@ import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Argonaut.Encode.Generic.Rep (class EncodeLiteral, encodeLiteralSumWithTransform, genericEncodeJson, genericEncodeJsonWith)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
-import Data.Either (Either(..), either, fromRight)
+import Data.Either (Either(..), either)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.String (toLower, toUpper)
 import Effect (Effect)
 import Effect.Console (log)
 import Effect.Exception (throw)
-import Partial.Unsafe (unsafePartial)
+import Partial.Unsafe (unsafeCrashWith)
 import Test.Assert (assert)
 
 data Example
@@ -144,7 +144,7 @@ main = do
   testLiteralSumWithTransform tagNameTransform original string = do
     let json = encodeLiteralSumWithTransform tagNameTransform original
     let parsed = decodeLiteralSumWithTransform tagNameTransform json
-    let parsed' = decodeLiteralSumWithTransform tagNameTransform <<< unsafePartial fromRight $ jsonParser string
+    let parsed' = decodeLiteralSumWithTransform tagNameTransform <<< either unsafeCrashWith identity $ jsonParser string
     log $ "Original:  " <> show original
     log $ "To JSON:   " <> stringify json
     log $ "From JSON: " <> show parsed

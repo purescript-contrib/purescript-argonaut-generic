@@ -22,10 +22,11 @@ import Data.Array (uncons)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..), note)
 import Data.Generic.Rep as Rep
-import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
+import Data.Symbol (class IsSymbol, reflectSymbol)
 import Foreign.Object as FO
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.TypeError (class Fail, Text)
+import Type.Proxy (Proxy(..))
 
 class DecodeRep r where
   decodeRepWith :: Encoding -> Json -> Either JsonDecodeError r
@@ -86,13 +87,13 @@ construct e valuesArray decodingErr = do
 
 instance decodeRepConstructorNoArgs :: IsSymbol name => DecodeRep (Rep.Constructor name Rep.NoArguments) where
   decodeRepWith e j = do
-    let name = reflectSymbol (SProxy :: SProxy name)
+    let name = reflectSymbol (Proxy :: Proxy name)
     {tag, decodingErr} <- withTag e j name
     construct e [] decodingErr
 else
 instance decodeRepConstructorArg :: (IsSymbol name, DecodeJson a) => DecodeRep (Rep.Constructor name (Rep.Argument a)) where
   decodeRepWith e j = do
-    let name = reflectSymbol (SProxy :: SProxy name)
+    let name = reflectSymbol (Proxy :: Proxy name)
     {tag, values, decodingErr} <- withTagAndValues e j name
     if e.unwrapSingleArguments
       then construct e [values] decodingErr
@@ -102,7 +103,7 @@ instance decodeRepConstructorArg :: (IsSymbol name, DecodeJson a) => DecodeRep (
 else
 instance decodeRepConstructor :: (IsSymbol name, DecodeRepArgs a) => DecodeRep (Rep.Constructor name a) where
   decodeRepWith e j = do
-    let name = reflectSymbol (SProxy :: SProxy name)
+    let name = reflectSymbol (Proxy :: Proxy name)
     {tag, values, decodingErr} <- withTagAndValues e j name
     valuesArray <- note (decodingErr $ AtKey e.valuesKey $ TypeMismatch "Array") (toArray values)
     construct e valuesArray decodingErr
@@ -150,7 +151,7 @@ instance decodeLiteralSumInst :: (DecodeLiteral a, DecodeLiteral b) => DecodeLit
 
 instance decodeLiteralConstructor :: (IsSymbol name) => DecodeLiteral (Rep.Constructor name (Rep.NoArguments)) where
   decodeLiteral tagNameTransform j = do
-    let name = reflectSymbol (SProxy :: SProxy name)
+    let name = reflectSymbol (Proxy :: Proxy name)
     let decodingErr = Named name
     tag <- note (decodingErr $ TypeMismatch "String") (toString j)
     when (tag /= tagNameTransform name) $

@@ -18,10 +18,11 @@ import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 import Data.Argonaut.Core (Json, fromArray, fromObject, fromString)
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Generic.Rep as Rep
-import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
+import Data.Symbol (class IsSymbol, reflectSymbol)
 import Foreign.Object as FO
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.TypeError (class Fail, Text)
+import Type.Proxy (Proxy(..))
 
 class EncodeRep r where
   encodeRepWith :: Encoding -> r -> Json
@@ -39,7 +40,7 @@ instance encodeRepSum :: (EncodeRep a, EncodeRep b) => EncodeRep (Rep.Sum a b) w
 instance encodeRepConstructor :: (IsSymbol name, EncodeRepArgs a) => EncodeRep (Rep.Constructor name a) where
   encodeRepWith e (Rep.Constructor a) =
     fromObject
-      $ FO.insert e.tagKey (fromString (reflectSymbol (SProxy :: SProxy name)))
+      $ FO.insert e.tagKey (fromString (reflectSymbol (Proxy :: Proxy name)))
       $ FO.insert e.valuesKey values
       $ FO.empty
     where
@@ -89,9 +90,9 @@ instance encodeLiteralSumInst :: (EncodeLiteral a, EncodeLiteral b) => EncodeLit
   encodeLiteral tagNameTransform (Rep.Inr b) = encodeLiteral tagNameTransform b
 
 instance encodeLiteralConstructor :: (IsSymbol name) => EncodeLiteral (Rep.Constructor name Rep.NoArguments) where
-  encodeLiteral tagNameTransform _ = fromString <<< tagNameTransform $ reflectSymbol (SProxy :: SProxy name)
+  encodeLiteral tagNameTransform _ = fromString <<< tagNameTransform $ reflectSymbol (Proxy :: Proxy name)
 
-type FailMessage = 
+type FailMessage =
   Text """`encodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."""
 
 instance encodeLiteralConstructorCannotBeProduct

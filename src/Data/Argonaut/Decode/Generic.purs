@@ -1,4 +1,4 @@
-module Data.Argonaut.Decode.Generic.Rep (
+module Data.Argonaut.Decode.Generic (
   class DecodeRep,
   class DecodeRepArgs,
   class DecodeLiteral,
@@ -17,7 +17,7 @@ import Prelude
 import Control.Alt ((<|>))
 import Data.Argonaut.Core (Json, fromString, toArray, toObject, toString, fromArray)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, JsonDecodeError(..))
-import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
+import Data.Argonaut.Types.Generic (Encoding, defaultEncoding)
 import Data.Array (uncons)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..), note)

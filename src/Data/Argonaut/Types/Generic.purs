@@ -1,4 +1,4 @@
-module Data.Argonaut.Types.Generic.Rep (
+module Data.Argonaut.Types.Generic (
   Encoding(..),
   defaultEncoding
 ) where
@@ -19,4 +19,3 @@ defaultEncoding =
   , valuesKey: "values"
   , unwrapSingleArguments: false
   }
-

@@ -7,6 +7,7 @@ Notable changes to this project are documented in this file. The format is based
 Breaking changes (😱!!!):
 
 - Removed vestigial `EncodeRepFields` class and its remaining instance for  `Data.Generic.Rep.Product`.
+- Renamed `Data.Argonaut.Decode.Generic.Rep` to `Data.Argonaut.Decode.Generic`, `Data.Argonaut.Encode.Generic.Rep` to `Data.Argonaut.Encode.Generic` and `Data.Argonaut.Types.Generic.Rep` to `Data.Argonaut.Types.Generic`.
 
 New features:
 

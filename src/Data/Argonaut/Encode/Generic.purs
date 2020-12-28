@@ -1,4 +1,4 @@
-module Data.Argonaut.Encode.Generic.Rep (
+module Data.Argonaut.Encode.Generic (
   class EncodeRep,
   class EncodeRepArgs,
   class EncodeLiteral,
@@ -13,10 +13,10 @@ module Data.Argonaut.Encode.Generic.Rep (
 ) where
 
 import Prelude
-import Data.Argonaut.Types.Generic.Rep (Encoding, defaultEncoding)
 
 import Data.Argonaut.Core (Json, fromArray, fromObject, fromString)
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
+import Data.Argonaut.Types.Generic (Encoding, defaultEncoding)
 import Data.Generic.Rep as Rep
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Foreign.Object as FO

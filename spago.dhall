@@ -6,7 +6,7 @@
   , "console"
   , "effect"
   , "exceptions"
-  , "generics-rep"
+  , "prelude"
   , "psci-support"
   , "record"
   ]

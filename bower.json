@@ -12,18 +12,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/purescript-contrib/purescript-argonaut-generic.git"
+    "url": "https://github.com/purescript-contrib/purescript-argonaut-generic.git"
   },
   "license": "MIT",
   "dependencies": {
-    "purescript-argonaut-core": "main",
-    "purescript-argonaut-codecs": "main",
-    "purescript-prelude": "master",
-    "purescript-record": "master"
+    "purescript-argonaut-codecs": "^8.0.0",
+    "purescript-argonaut-core": "^6.0.0",
+    "purescript-prelude": "^5.0.0",
+    "purescript-record": "^3.0.0"
   },
   "devDependencies": {
-    "purescript-assert": "master",
-    "purescript-console": "master",
-    "purescript-exceptions": "master"
+    "purescript-assert": "^5.0.0",
+    "purescript-console": "^5.0.0",
+    "purescript-effect": "^3.0.0",
+    "purescript-exceptions": "^5.0.0"
   }
 }

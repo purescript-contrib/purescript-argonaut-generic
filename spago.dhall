@@ -2,13 +2,19 @@
 , dependencies =
   [ "argonaut-codecs"
   , "argonaut-core"
+  , "arrays"
   , "assert"
+  , "bifunctors"
   , "console"
+  , "control"
   , "effect"
+  , "either"
   , "exceptions"
+  , "foreign-object"
+  , "partial"
   , "prelude"
   , "psci-support"
-  , "record"
+  , "strings"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

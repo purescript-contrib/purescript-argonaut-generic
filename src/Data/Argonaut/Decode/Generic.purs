@@ -35,7 +35,7 @@ decodeRep :: forall r. DecodeRep r => Json -> Either JsonDecodeError r
 decodeRep = decodeRepWith defaultEncoding
 
 instance decodeRepNoConstructors :: DecodeRep Rep.NoConstructors where
-  decodeRepWith e _ = Left $ UnexpectedValue $ fromString "NoConstructors (Cannot decode empty data type)"
+  decodeRepWith _ _ = Left $ UnexpectedValue $ fromString "NoConstructors (Cannot decode empty data type)"
 
 instance decodeRepSum :: (DecodeRep a, DecodeRep b) => DecodeRep (Rep.Sum a b) where
   decodeRepWith e j = Rep.Inl <$> decodeRepWith e j <|> Rep.Inr <$> decodeRepWith e j
@@ -88,13 +88,13 @@ construct e valuesArray decodingErr = do
 instance decodeRepConstructorNoArgs :: IsSymbol name => DecodeRep (Rep.Constructor name Rep.NoArguments) where
   decodeRepWith e j = do
     let name = reflectSymbol (Proxy :: Proxy name)
-    {tag, decodingErr} <- withTag e j name
+    {decodingErr} <- withTag e j name
     construct e [] decodingErr
 else
 instance decodeRepConstructorArg :: (IsSymbol name, DecodeJson a) => DecodeRep (Rep.Constructor name (Rep.Argument a)) where
   decodeRepWith e j = do
     let name = reflectSymbol (Proxy :: Proxy name)
-    {tag, values, decodingErr} <- withTagAndValues e j name
+    {values, decodingErr} <- withTagAndValues e j name
     if e.unwrapSingleArguments
       then construct e [values] decodingErr
       else do
@@ -104,7 +104,7 @@ else
 instance decodeRepConstructor :: (IsSymbol name, DecodeRepArgs a) => DecodeRep (Rep.Constructor name a) where
   decodeRepWith e j = do
     let name = reflectSymbol (Proxy :: Proxy name)
-    {tag, values, decodingErr} <- withTagAndValues e j name
+    {values, decodingErr} <- withTagAndValues e j name
     valuesArray <- note (decodingErr $ AtKey e.valuesKey $ TypeMismatch "Array") (toArray values)
     construct e valuesArray decodingErr
 

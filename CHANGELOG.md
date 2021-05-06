@@ -11,6 +11,10 @@ New features:
 Bugfixes:
 
 Other improvements:
+
+## [v7.0.1](https://github.com/purescript-contrib/purescript-argonaut-generic/releases/tag/v7.0.1) - 2021-05-06
+
+Other improvements:
 - Removed unused names found by the v0.14.1 PureScript release (#36)
 - Installed dependencies directly imported into source code that were previously installed transitively and removed unused `record` dependency (#36)
 
@@ -20,10 +24,6 @@ Breaking changes:
 - Added support for PureScript 0.14 and dropped support for all previous versions (#31, #33)
 - Removed vestigial `EncodeRepFields` class and its remaining instance for `Data.Generic.Rep.Product` (#29)
 - Renamed `Data.Argonaut.Decode.Generic.Rep` to `Data.Argonaut.Decode.Generic`, `Data.Argonaut.Encode.Generic.Rep` to `Data.Argonaut.Encode.Generic` and `Data.Argonaut.Types.Generic.Rep` to `Data.Argonaut.Types.Generic`. (#33)
-
-New features:
-
-Bugfixes:
 
 Other improvements:
 - Changed default branch to `main` from `master`

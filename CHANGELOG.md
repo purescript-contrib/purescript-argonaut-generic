@@ -11,6 +11,8 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Removed unused names found by the v0.14.1 PureScript release (#36)
+- Installed dependencies directly imported into source code that were previously installed transitively and removed unused `record` dependency (#36)
 
 ## [v7.0.0](https://github.com/purescript-contrib/purescript-argonaut-generic/releases/tag/v7.0.0) - 2021-02-26
 

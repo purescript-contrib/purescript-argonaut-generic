@@ -1,16 +1,16 @@
-module Data.Argonaut.Encode.Generic (
-  class EncodeRep,
-  class EncodeRepArgs,
-  class EncodeLiteral,
-  encodeRep,
-  encodeRepWith,
-  encodeRepArgs,
-  genericEncodeJson,
-  genericEncodeJsonWith,
-  encodeLiteralSum,
-  encodeLiteralSumWithTransform,
-  encodeLiteral
-) where
+module Data.Argonaut.Encode.Generic
+  ( class EncodeRep
+  , class EncodeRepArgs
+  , class EncodeLiteral
+  , encodeRep
+  , encodeRepWith
+  , encodeRepArgs
+  , genericEncodeJson
+  , genericEncodeJsonWith
+  , encodeLiteralSum
+  , encodeLiteralSumWithTransform
+  , encodeLiteral
+  ) where
 
 import Prelude
 
@@ -44,13 +44,14 @@ instance encodeRepConstructor :: (IsSymbol name, EncodeRepArgs a) => EncodeRep (
       $ FO.insert e.valuesKey values
       $ FO.empty
     where
-      values =
-        let vs = encodeRepArgs a in
-        if e.unwrapSingleArguments
-          then case vs of
-            [v] -> v
-            _ -> fromArray vs
-          else fromArray vs
+    values =
+      let
+        vs = encodeRepArgs a
+      in
+        if e.unwrapSingleArguments then case vs of
+          [ v ] -> v
+          _ -> fromArray vs
+        else fromArray vs
 
 class EncodeRepArgs r where
   encodeRepArgs :: r -> Array Json
@@ -62,7 +63,7 @@ instance encodeRepArgsProduct :: (EncodeRepArgs a, EncodeRepArgs b) => EncodeRep
   encodeRepArgs (Rep.Product a b) = encodeRepArgs a <> encodeRepArgs b
 
 instance encodeRepArgsArgument :: (EncodeJson a) => EncodeRepArgs (Rep.Argument a) where
-  encodeRepArgs (Rep.Argument a) = [encodeJson a]
+  encodeRepArgs (Rep.Argument a) = [ encodeJson a ]
 
 -- | Encode any `Generic` data structure into `Json`.
 genericEncodeJson :: forall a r. Rep.Generic a r => EncodeRep r => a -> Json
@@ -95,7 +96,7 @@ instance encodeLiteralConstructor :: (IsSymbol name) => EncodeLiteral (Rep.Const
 type FailMessage =
   Text """`encodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."""
 
-instance encodeLiteralConstructorCannotBeProduct
-  :: Fail FailMessage
-  => EncodeLiteral (Rep.Product a b) where
+instance encodeLiteralConstructorCannotBeProduct ::
+  Fail FailMessage =>
+  EncodeLiteral (Rep.Product a b) where
   encodeLiteral _ _ = unsafeCrashWith "unreachable encodeLiteral was reached."

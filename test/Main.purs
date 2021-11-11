@@ -23,7 +23,7 @@ import Test.Assert (assert)
 
 data Example
   = Either (Either String Example)
-  | Record { foo :: Int, bar :: String}
+  | Record { foo :: Int, bar :: String }
   | Nested { foo :: { nested :: Int }, bar :: String }
   | Product Int Int Example
 
@@ -31,8 +31,10 @@ derive instance eqExample :: Eq Example
 derive instance genericExample :: Generic Example _
 instance showExample :: Show Example where
   show a = genericShow a
+
 instance encodeJsonExample :: EncodeJson Example where
   encodeJson a = genericEncodeJson a
+
 instance decodeJson :: DecodeJson Example where
   decodeJson a = genericDecodeJson a
 
@@ -45,8 +47,10 @@ derive instance eqLiteralStringExample :: Eq LiteralStringExample
 derive instance genericLiteralStringExample :: Generic LiteralStringExample _
 instance showLiteralStringExample :: Show LiteralStringExample where
   show a = genericShow a
+
 instance encodeJsonLiteralStringExample :: EncodeJson LiteralStringExample where
   encodeJson a = encodeLiteralSumWithTransform identity a
+
 instance decodeJsonLiteralStringExample :: DecodeJson LiteralStringExample where
   decodeJson a = decodeLiteralSumWithTransform identity a
 
@@ -57,12 +61,15 @@ diffEncodingOptions = defaultEncoding
   }
 
 data DiffEncoding = A | B Int
+
 derive instance eqDiffEncoding :: Eq DiffEncoding
 derive instance genericDiffEncoding :: Generic DiffEncoding _
 instance showDiffENcoding :: Show DiffEncoding where
   show a = genericShow a
+
 instance encodeJsonDiffEncoding :: EncodeJson DiffEncoding where
   encodeJson a = genericEncodeJsonWith diffEncodingOptions a
+
 instance decodeJsonDiffEncoding :: DecodeJson DiffEncoding where
   decodeJson a = genericDecodeJsonWith diffEncodingOptions a
 
@@ -72,22 +79,28 @@ unwrapSingleArgsOptions = defaultEncoding
   }
 
 data UnwrapSingleArgs = U0 Int | U1 Int Int
+
 derive instance eqUnwrapSingleArgs :: Eq UnwrapSingleArgs
 derive instance genericUnwrapSingleArgs :: Generic UnwrapSingleArgs _
 instance showUnwrapSingleArgs :: Show UnwrapSingleArgs where
   show a = genericShow a
+
 instance encodeJsonUnwrapSingleArgs :: EncodeJson UnwrapSingleArgs where
   encodeJson a = genericEncodeJsonWith unwrapSingleArgsOptions a
+
 instance decodeJsonUnwrapSingleArgs :: DecodeJson UnwrapSingleArgs where
   decodeJson a = genericDecodeJsonWith unwrapSingleArgsOptions a
 
 data IgnoreNullaryArgs = NA0 | NA1 Int
+
 derive instance eqIgnoreNullaryArgs :: Eq IgnoreNullaryArgs
 derive instance genericIgnoreNullaryArgs :: Generic IgnoreNullaryArgs _
 instance showIgnoreNullaryArgs :: Show IgnoreNullaryArgs where
   show a = genericShow a
+
 instance encodeJsonIgnoreNullaryArgs :: EncodeJson IgnoreNullaryArgs where
   encodeJson a = genericEncodeJson a
+
 instance decodeJsonIgnoreNullaryArgs :: DecodeJson IgnoreNullaryArgs where
   decodeJson a = genericDecodeJson a
 
@@ -98,8 +111,8 @@ main :: Effect Unit
 main = do
   example $ Either $ Left "foo"
   example $ Either $ Right $ Either $ Left "foo"
-  example $ Record {foo: 42, bar: "bar"}
-  example $ Nested {foo: {nested: 42}, bar: "bar"}
+  example $ Record { foo: 42, bar: "bar" }
+  example $ Nested { foo: { nested: 42 }, bar: "bar" }
   example $ Product 1 2 $ Either $ Left "foo"
   example $ Frikandel
   example $ A
@@ -131,8 +144,9 @@ main = do
     assert $ parsed == Right original
     log $ "--------------------------------------------------------------------------------"
 
-  testLiteralSumWithTransform :: forall a rep
-    . Show a
+  testLiteralSumWithTransform
+    :: forall a rep
+     . Show a
     => Eq a
     => Generic a rep
     => EncodeLiteral rep

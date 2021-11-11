@@ -1,16 +1,16 @@
-module Data.Argonaut.Decode.Generic (
-  class DecodeRep,
-  class DecodeRepArgs,
-  class DecodeLiteral,
-  decodeRep,
-  decodeRepWith,
-  decodeRepArgs,
-  genericDecodeJson,
-  genericDecodeJsonWith,
-  decodeLiteralSum,
-  decodeLiteralSumWithTransform,
-  decodeLiteral
-) where
+module Data.Argonaut.Decode.Generic
+  ( class DecodeRep
+  , class DecodeRepArgs
+  , class DecodeLiteral
+  , decodeRep
+  , decodeRepWith
+  , decodeRepArgs
+  , genericDecodeJson
+  , genericDecodeJsonWith
+  , decodeLiteralSum
+  , decodeLiteralSumWithTransform
+  , decodeLiteral
+  ) where
 
 import Prelude
 
@@ -40,90 +40,94 @@ instance decodeRepNoConstructors :: DecodeRep Rep.NoConstructors where
 instance decodeRepSum :: (DecodeRep a, DecodeRep b) => DecodeRep (Rep.Sum a b) where
   decodeRepWith e j = Rep.Inl <$> decodeRepWith e j <|> Rep.Inr <$> decodeRepWith e j
 
-withTag ::
-  Encoding ->
-  Json ->
-  String ->
-  Either JsonDecodeError
-    { tag :: String
-    , decodingErr :: JsonDecodeError -> JsonDecodeError
-    }
+withTag
+  :: Encoding
+  -> Json
+  -> String
+  -> Either JsonDecodeError
+       { tag :: String
+       , decodingErr :: JsonDecodeError -> JsonDecodeError
+       }
 withTag e j name = do
   let decodingErr = Named name
   jObj <- note (decodingErr $ TypeMismatch "Object") (toObject j)
   jTag <- note (decodingErr $ AtKey e.tagKey MissingValue) (FO.lookup e.tagKey jObj)
   tag <- note (decodingErr $ AtKey e.tagKey $ TypeMismatch "String") (toString jTag)
-  when (tag /= name) $
-    Left $ decodingErr $ AtKey e.tagKey $ UnexpectedValue $ fromString tag
-  pure {tag, decodingErr}
+  when (tag /= name)
+    $ Left
+    $ decodingErr
+    $ AtKey e.tagKey
+    $ UnexpectedValue
+    $ fromString tag
+  pure { tag, decodingErr }
 
-withTagAndValues ::
-  Encoding ->
-  Json ->
-  String ->
-  Either JsonDecodeError
-    { tag :: String
-    , values :: Json
-    , decodingErr :: JsonDecodeError -> JsonDecodeError
-    }
+withTagAndValues
+  :: Encoding
+  -> Json
+  -> String
+  -> Either JsonDecodeError
+       { tag :: String
+       , values :: Json
+       , decodingErr :: JsonDecodeError -> JsonDecodeError
+       }
 withTagAndValues e j name = do
-  {tag, decodingErr} <- withTag e j name
+  { tag, decodingErr } <- withTag e j name
   jObj <- note (decodingErr $ TypeMismatch "Object") (toObject j)
   values <- note (decodingErr $ AtKey e.valuesKey MissingValue) (FO.lookup e.valuesKey jObj)
-  pure {tag, values, decodingErr}
+  pure { tag, values, decodingErr }
 
-construct ::
-  forall e t s .
-  DecodeRepArgs t =>
-  Encoding ->
-  Array Json ->
-  (JsonDecodeError -> e) ->
-  Either e (Rep.Constructor s t)
+construct
+  :: forall e t s
+   . DecodeRepArgs t
+  => Encoding
+  -> Array Json
+  -> (JsonDecodeError -> e)
+  -> Either e (Rep.Constructor s t)
 construct e valuesArray decodingErr = do
-  {init, rest} <- lmap decodingErr $ decodeRepArgs valuesArray
-  when (rest /= []) $
-    Left $ decodingErr $ AtKey e.valuesKey $ UnexpectedValue (fromArray rest)
+  { init, rest } <- lmap decodingErr $ decodeRepArgs valuesArray
+  when (rest /= [])
+    $ Left
+    $ decodingErr
+    $ AtKey e.valuesKey
+    $ UnexpectedValue (fromArray rest)
   pure $ Rep.Constructor init
 
 instance decodeRepConstructorNoArgs :: IsSymbol name => DecodeRep (Rep.Constructor name Rep.NoArguments) where
   decodeRepWith e j = do
     let name = reflectSymbol (Proxy :: Proxy name)
-    {decodingErr} <- withTag e j name
+    { decodingErr } <- withTag e j name
     construct e [] decodingErr
-else
-instance decodeRepConstructorArg :: (IsSymbol name, DecodeJson a) => DecodeRep (Rep.Constructor name (Rep.Argument a)) where
+else instance decodeRepConstructorArg :: (IsSymbol name, DecodeJson a) => DecodeRep (Rep.Constructor name (Rep.Argument a)) where
   decodeRepWith e j = do
     let name = reflectSymbol (Proxy :: Proxy name)
-    {values, decodingErr} <- withTagAndValues e j name
-    if e.unwrapSingleArguments
-      then construct e [values] decodingErr
-      else do
-        valuesArray <- note (decodingErr $ AtKey e.valuesKey $ TypeMismatch "Array") (toArray values)
-        construct e valuesArray decodingErr
-else
-instance decodeRepConstructor :: (IsSymbol name, DecodeRepArgs a) => DecodeRep (Rep.Constructor name a) where
+    { values, decodingErr } <- withTagAndValues e j name
+    if e.unwrapSingleArguments then construct e [ values ] decodingErr
+    else do
+      valuesArray <- note (decodingErr $ AtKey e.valuesKey $ TypeMismatch "Array") (toArray values)
+      construct e valuesArray decodingErr
+else instance decodeRepConstructor :: (IsSymbol name, DecodeRepArgs a) => DecodeRep (Rep.Constructor name a) where
   decodeRepWith e j = do
     let name = reflectSymbol (Proxy :: Proxy name)
-    {values, decodingErr} <- withTagAndValues e j name
+    { values, decodingErr } <- withTagAndValues e j name
     valuesArray <- note (decodingErr $ AtKey e.valuesKey $ TypeMismatch "Array") (toArray values)
     construct e valuesArray decodingErr
 
 class DecodeRepArgs r where
-  decodeRepArgs :: Array Json -> Either JsonDecodeError {init :: r, rest :: Array Json}
+  decodeRepArgs :: Array Json -> Either JsonDecodeError { init :: r, rest :: Array Json }
 
 instance decodeRepArgsNoArguments :: DecodeRepArgs Rep.NoArguments where
-  decodeRepArgs js = Right {init: Rep.NoArguments, rest: js}
+  decodeRepArgs js = Right { init: Rep.NoArguments, rest: js }
 
 instance decodeRepArgsProduct :: (DecodeRepArgs a, DecodeRepArgs b) => DecodeRepArgs (Rep.Product a b) where
   decodeRepArgs js = do
-    {init: a, rest: js'} <- decodeRepArgs js
-    {init: b, rest: js''} <- decodeRepArgs js'
-    pure {init: Rep.Product a b, rest: js''}
+    { init: a, rest: js' } <- decodeRepArgs js
+    { init: b, rest: js'' } <- decodeRepArgs js'
+    pure { init: Rep.Product a b, rest: js'' }
 
 instance decodeRepArgsArgument :: (DecodeJson a) => DecodeRepArgs (Rep.Argument a) where
   decodeRepArgs js = do
-    {head, tail} <- note (TypeMismatch "NonEmptyArray") (uncons js)
-    {init: _, rest: tail} <<< Rep.Argument <$> decodeJson head
+    { head, tail } <- note (TypeMismatch "NonEmptyArray") (uncons js)
+    { init: _, rest: tail } <<< Rep.Argument <$> decodeJson head
 
 -- | Decode `Json` representation of a value which has a `Generic` type.
 genericDecodeJson :: forall a r. Rep.Generic a r => DecodeRep r => Json -> Either JsonDecodeError a
@@ -154,15 +158,16 @@ instance decodeLiteralConstructor :: (IsSymbol name) => DecodeLiteral (Rep.Const
     let name = reflectSymbol (Proxy :: Proxy name)
     let decodingErr = Named name
     tag <- note (decodingErr $ TypeMismatch "String") (toString j)
-    when (tag /= tagNameTransform name) $
-      Left $ decodingErr $ UnexpectedValue (fromString tag)
+    when (tag /= tagNameTransform name)
+      $ Left
+      $ decodingErr
+      $ UnexpectedValue (fromString tag)
     pure $ Rep.Constructor (Rep.NoArguments)
-
 
 type FailMessage =
   Text "`decodeLiteralSum` can only be used with sum types, where all of the constructors are nullary. This is because a string literal cannot be encoded into a product type."
 
-instance decodeLiteralConstructorCannotTakeProduct
-  :: Fail FailMessage
-  => DecodeLiteral (Rep.Product a b) where
-    decodeLiteral _ _ = unsafeCrashWith "unreachable DecodeLiteral was reached."
+instance decodeLiteralConstructorCannotTakeProduct ::
+  Fail FailMessage =>
+  DecodeLiteral (Rep.Product a b) where
+  decodeLiteral _ _ = unsafeCrashWith "unreachable DecodeLiteral was reached."

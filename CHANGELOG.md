@@ -11,6 +11,7 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Added `purs-tidy` formatter (#38 by @thomashoneyman)
 
 ## [v7.0.1](https://github.com/purescript-contrib/purescript-argonaut-generic/releases/tag/v7.0.1) - 2021-05-06
 

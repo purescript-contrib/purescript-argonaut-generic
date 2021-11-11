@@ -1,7 +1,7 @@
-module Data.Argonaut.Types.Generic (
-  Encoding(..),
-  defaultEncoding
-) where
+module Data.Argonaut.Types.Generic
+  ( Encoding(..)
+  , defaultEncoding
+  ) where
 
 -- | Encoding settings:
 -- | tagKey -- which key to use in the JSON object for sum-type constructors

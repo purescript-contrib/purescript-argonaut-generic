@@ -3,7 +3,6 @@
 [![CI](https://github.com/purescript-contrib/purescript-argonaut-generic/workflows/CI/badge.svg?branch=main)](https://github.com/purescript-contrib/purescript-argonaut-generic/actions?query=workflow%3ACI+branch%3Amain)
 [![Release](http://img.shields.io/github/release/purescript-contrib/purescript-argonaut-generic.svg)](https://github.com/purescript-contrib/purescript-argonaut-generic/releases)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-argonaut-generic/badge)](http://pursuit.purescript.org/packages/purescript-argonaut-generic)
-[![Maintainer: thomashoneyman](https://img.shields.io/badge/maintainer-thomashoneyman-teal.svg)](http://github.com/thomashoneyman)
 
 This package provides `genericEncodeJson` and `genericDecodeJson` functions for any data types that have a `Generic.Rep` instance, which can be used to encode or decode `Json` values or to implement `EncodeJson` and `DecodeJson` instances for [`argonaut-codecs`](https://github.com/purescript-contrib/purescript-argonaut-codecs).
 

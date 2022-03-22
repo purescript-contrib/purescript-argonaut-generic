@@ -16,15 +16,15 @@
   },
   "license": "MIT",
   "dependencies": {
-    "purescript-argonaut-codecs": "^8.0.0",
-    "purescript-argonaut-core": "^6.0.0",
-    "purescript-prelude": "^5.0.0",
-    "purescript-record": "^3.0.0"
+    "purescript-argonaut-codecs": "main",
+    "purescript-argonaut-core": "main",
+    "purescript-prelude": "master",
+    "purescript-record": "master"
   },
   "devDependencies": {
-    "purescript-assert": "^5.0.0",
-    "purescript-console": "^5.0.0",
-    "purescript-effect": "^3.0.0",
-    "purescript-exceptions": "^5.0.0"
+    "purescript-assert": "master",
+    "purescript-console": "master",
+    "purescript-effect": "master",
+    "purescript-exceptions": "master"
   }
 }

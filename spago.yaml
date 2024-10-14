@@ -1,0 +1,28 @@
+package:
+  name: argonaut-generic
+  description: Encoding and decoding functions for generic datatypes
+  publish:
+    license: MIT
+    version: 9.0.0
+    location:
+      githubOwner: purescript-contrib
+      githubRepo: purescript-argonaut-generic
+  dependencies:
+    - argonaut-codecs: ">=9.1.0 <10.0.0"
+    - argonaut-core: ">=7.0.0 <8.0.0"
+    - arrays: ">=7.3.0 <8.0.0"
+    - bifunctors: ">=6.0.0 <7.0.0"
+    - control: ">=6.0.0 <7.0.0"
+    - either: ">=6.1.0 <7.0.0"
+    - foreign-object: ">=4.1.0 <5.0.0"
+    - partial: ">=4.0.0 <5.0.0"
+    - prelude: ">=6.0.1 <7.0.0"
+  test:
+    main: Test.Main
+    dependencies:
+      - assert
+      - console
+      - effect
+      - exceptions
+      - strings
+workspace: {}
